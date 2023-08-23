@@ -1,7 +1,7 @@
 # XML-SIE files Validator (validate_xml_sie)
-<a href="https://github.com/FernandoTorresL/validate_xml_sie/commits/main" target="_blank">![GitHub last commit](https://img.shields.io/github/last-commit/FernandoTorresL/gradebook_project)</a>
+<a href="https://github.com/FernandoTorresL/validate_xml_sie/commits/main" target="_blank">![GitHub last commit](https://img.shields.io/github/last-commit/FernandoTorresL/validate_xml_sie)</a>
 
-<a href="https://github.com/FernandoTorresL/validate_xml_sie" target="_blank">![GitHub repo size](https://img.shields.io/github/repo-size/FernandoTorresL/gradebook_project)</a>
+<a href="https://github.com/FernandoTorresL/validate_xml_sie" target="_blank">![GitHub repo size](https://img.shields.io/github/repo-size/FernandoTorresL/validate_xml_sie)</a>
 ## Project for IMSS, México. (Projecto personal para IMSS, México)
 
 Validate XML files structure and data for use with SIE (IMSS) system.

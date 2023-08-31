@@ -15,7 +15,7 @@ def read_user_cli_args():
     )
 
     parser.add_argument(
-        "xml_filename", nargs="+", type=str, help="enter the xml filename"
+        "xml_file", nargs="+", type=str, help="enter the xml filename"
     )
     parser.add_argument(
         "-x",
@@ -44,6 +44,21 @@ def _get_ws_renapo_url():
     config = ConfigParser()
     config.read("secrets.ini")
     return config["urls"]["ws_url_renapo"]
+
+def _get_xsd_filename():
+    """Fetch the XSD definition file from your configuration file.
+
+    Expects a xsd definition file named "xsd_file.xsd":
+
+        [urls]
+        ws_url_renapo=<YOUR-WS_RENAPO-URL>
+
+        [files]
+        xsd_file=filename.xsd
+    """
+    config = ConfigParser()
+    config.read("secrets.ini")
+    return config["files"]["xsd_file"]
 
 def create_report():
     pass
@@ -77,12 +92,14 @@ if __name__ == '__main__':
 
     user_args = read_user_cli_args()
     # Check the args values
-    print(user_args.xml_filename, user_args.xsd, user_args.renapo)
+    print(f"\tParameters:{user_args.xml_file, user_args.xsd, user_args.renapo}", end="\n\n")
 
     # Testing getting a secret
-    print(_get_ws_renapo_url())
+    print(f"\tInput XML File:\t{user_args.xml_file}", end="\n")
 
-    # Testing another secret
-    config = ConfigParser()
-    config.read("secrets.ini")
-    print(config["files"]["input_file"])
+    ws_renapo_url=_get_ws_renapo_url()
+    print(f"\tURL WS_RENAPO:\t{ws_renapo_url}", end="\n")
+
+    xsd_filename=_get_xsd_filename()
+    print(f"\tXSD File:\t{xsd_filename}", end="\n")
+

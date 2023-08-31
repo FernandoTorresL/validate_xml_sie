@@ -120,16 +120,23 @@ def read_xml_to_csv(input_xml_file, output_report_file):
 
     df = pd.DataFrame(data)
 
+    return df
+
+
+def dataframe_to_csv(df, output_file):
+
     now = datetime.datetime.now().strftime("%Y_%m_%d_%H%M%S")
     output_csv_file = "./output_files/{datetime}_dataframe.csv".format(
         datetime=now)
 
     df.to_csv(output_csv_file, encoding='utf-8')
 
+    linea_reporte = "# Output CSV File generated: " + output_csv_file
+
     style.change_color(style.GREEN)
-    linea_reporte = "CSV File generated: " + output_csv_file
     print(f"\t{linea_reporte}")
 
+    save_on_report(output_file, linea_reporte)
 
 def validate_vs_xsd(input_xml_file, xsd_file, output_report_file):
     #Validate XML against XSD
@@ -147,10 +154,10 @@ def validate_vs_xsd(input_xml_file, xsd_file, output_report_file):
 
         if xmlschema.validate(tree) == False:
             style.change_color(style.RED)
-            linea_reporte = "XML MAL FORMADO contra definición XSD"
+            linea_reporte = "# XML MAL FORMADO contra definición XSD"
         else:
             style.change_color(style.GREEN)
-            linea_reporte = "XML CORRECTO vs Definición XSD"
+            linea_reporte = "# XML CORRECTO vs Definición XSD"
 
         print(f"\t{linea_reporte}")
         save_on_report(output_report_file, linea_reporte)
@@ -216,7 +223,5 @@ if __name__ == "__main__":
     print("", end="\n")
     if check_xml_input_file(input_xml_file, output_file):
         validate_vs_xsd(input_xml_file, xsd_file, output_file)
-    read_xml_to_csv(input_xml_file, output_file)
-
-
-
+        df = read_xml_to_csv(input_xml_file, output_file)
+        dataframe_to_csv(df, output_file)

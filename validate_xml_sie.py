@@ -2,7 +2,12 @@
 
 import argparse
 import datetime
+import os
 from configparser import ConfigParser
+
+import lxml.etree as ET
+
+import style
 
 
 def read_user_cli_args():
@@ -76,12 +81,63 @@ def create_report_file(input_xml_file, xsd_file, xsd_check, renapo_check):
 
         return output_report_file
 
+def check_xml_input_file(input_xml_file, output_file):
+    style.change_color(style.WHITE)
+    linea_reporte = 'Revisando existencia de archivo XML'
+    print(linea_reporte)
+
+    xml_file_path = os.path.join("./", "input_files")
+    file_exist=False
+
+    for filename in os.listdir(xml_file_path):
+        if filename.endswith('.xml') and filename == input_xml_file:
+            file_exist= True
+
+    if not file_exist:
+        style.change_color(style.RED)
+        linea_reporte = xml_file_path + '/' + input_xml_file + '|File not found.'
+        print(f"\t{linea_reporte}")
+
+        save_on_report(output_file, linea_reporte)
+
+    return file_exist
 
 def read_xml():
     pass
 
-def validate_vs_xsd():
-    pass
+def validate_vs_xsd(input_xml_file, xsd_file, output_report_file):
+    #Validate XML against XSD
+    try:
+        style.change_color(style.WHITE)
+        linea_reporte = 'Validando XML contra XSD'
+        print(linea_reporte)
+
+        xml_file_path = os.path.join("./input_files/", input_xml_file)
+        xsd_file_path = os.path.join('./archivo_xsd/', xsd_file)
+
+        xmlschema = ET.XMLSchema(ET.parse(xsd_file_path))
+
+        tree = ET.parse(xml_file_path)
+
+        if xmlschema.validate(tree) == False:
+            style.change_color(style.RED)
+            linea_reporte = "XML MAL FORMADO contra definición XSD"
+        else:
+            style.change_color(style.GREEN)
+            linea_reporte = "XML CORRECTO vs Definición XSD"
+
+        print(f"\t{linea_reporte}")
+        save_on_report(output_report_file, linea_reporte)
+
+    except FileNotFoundError:
+        style.change_color(style.RED)
+        print("File not found.")
+    except ET.ParseError:
+        style.change_color(style.RED)
+        print("Error parsing XML file.")
+    except ValueError as ve:
+        style.change_color(style.RED)
+        print("Validation error:", ve)
 
 def analyzing_data():
     pass
@@ -95,8 +151,9 @@ def validate_custom_rules():
 def search_on_ws():
     pass
 
-def save_on_report():
-    pass
+def save_on_report(output_report_file, linea):
+    with open(output_report_file, mode='a', newline='', encoding='utf-8') as f:
+        f.write(linea + "\n")
 
 
 if __name__ == '__main__':
@@ -106,6 +163,8 @@ if __name__ == '__main__':
 
     user_args = read_user_cli_args()
     # Check the args values
+    style.change_color(style.BLUE)
+
     print(f"\tParameters:{user_args.xml_file, user_args.xsd_check, user_args.renapo_check}", end="\n\n")
     print(f"\tParameter xml_file:\t{user_args.xml_file}", end="\n")
     print(f"\tParameter xsd_check:\t{user_args.xsd_check}", end="\n")
@@ -121,6 +180,15 @@ if __name__ == '__main__':
     xsd_file = _get_xsd_file()
     print(f"\tXSD File:\t{xsd_file}", end="\n\n")
 
+    # MAIN
+    # Create output file and save params
     output_file = create_report_file(input_xml_file, xsd_file, user_args.xsd_check, user_args.renapo_check)
     print(f"\tOutput File:\t{output_file}", end="\n")
+
+    # Check that XML File exist
+    #print(check_xml_input_file(input_xml_file))
+    print("", end="\n")
+    if check_xml_input_file(input_xml_file, output_file):
+        validate_vs_xsd(input_xml_file, xsd_file, output_file)
+
 

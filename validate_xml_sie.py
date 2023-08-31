@@ -6,6 +6,7 @@ import os
 from configparser import ConfigParser
 
 import lxml.etree as ET
+import pandas as pd
 
 import style
 
@@ -102,8 +103,33 @@ def check_xml_input_file(input_xml_file, output_file):
 
     return file_exist
 
-def read_xml():
-    pass
+def read_xml_to_csv(input_xml_file, output_report_file):
+    # Parse XML
+    xml_file_path = os.path.join("./input_files/", input_xml_file)
+
+    tree = ET.parse(xml_file_path)
+    root = tree.getroot()
+
+    # Extract data
+    data = []
+    for elem in root:
+        row = {}
+        for subelem in elem:
+            row[subelem.tag] = subelem.text
+        data.append(row)
+
+    df = pd.DataFrame(data)
+
+    now = datetime.datetime.now().strftime("%Y_%m_%d_%H%M%S")
+    output_csv_file = "./output_files/{datetime}_dataframe.csv".format(
+        datetime=now)
+
+    df.to_csv(output_csv_file, encoding='utf-8')
+
+    style.change_color(style.GREEN)
+    linea_reporte = "CSV File generated: " + output_csv_file
+    print(f"\t{linea_reporte}")
+
 
 def validate_vs_xsd(input_xml_file, xsd_file, output_report_file):
     #Validate XML against XSD
@@ -190,5 +216,7 @@ if __name__ == "__main__":
     print("", end="\n")
     if check_xml_input_file(input_xml_file, output_file):
         validate_vs_xsd(input_xml_file, xsd_file, output_file)
+    read_xml_to_csv(input_xml_file, output_file)
+
 
 

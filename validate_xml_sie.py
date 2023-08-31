@@ -1,3 +1,19 @@
+# validate_xml_sie.py
+
+from configparser import ConfigParser
+
+
+def _get_ws_renapo_url():
+    """Fetch the WS-URL from your configuration file.
+
+    Expects a configuration file named "secrets.ini" with structure:
+
+        [urls]
+        ws_url_renapo=<YOUR-WS_RENAPO-URL>
+    """
+    config = ConfigParser()
+    config.read("secrets.ini")
+    return config["urls"]["ws_url_renapo"]
 
 def create_report():
     pass
@@ -25,4 +41,11 @@ def save_on_report():
 
 
 if __name__ == '__main__':
-    pass
+
+    # Testing getting a secret
+    print(_get_ws_renapo_url())
+
+    # Testing another secret
+    config = ConfigParser()
+    config.read("secrets.ini")
+    print(config["files"]["input_file"])

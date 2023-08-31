@@ -420,3 +420,6 @@ OLDNotebook_admin_users.ipynb
 
 # Ignore test files
 validate_xml_sie_*
+
+# Ignore secret file
+secrets.ini

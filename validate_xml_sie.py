@@ -109,7 +109,11 @@ def read_xml_tree(input_xml_file):
 
     return root
 
+
 def read_xml_to_dataframe(root):
+    style.change_color(style.WHITE)
+    linea_reporte = "Exporting XML file to dataframe"
+    print(linea_reporte)
 
     # Extract data
     data = []
@@ -139,26 +143,25 @@ def dataframe_to_csv(df, output_file):
 
     style.change_color(style.GREEN)
     print(f"\t{linea_reporte}")
-
     save_on_report(output_file, linea_reporte)
+
 
 def validate_vs_xsd(input_xml_file, xsd_file, xsd_check, output_file):
     #Validate XML against XSD
     style.change_color(style.WHITE)
-    linea_reporte = "Revisando parametro xsd_check..."
+    linea_reporte = "Validating XML vs XSD Definition file..."
     print(linea_reporte)
 
     if not user_args.xsd_check:
-        linea_reporte = "# ...Option xsd_chek: False. Dont check vs XSD File"
-        style.change_color(style.RED)
+        linea_reporte = "# ...parameter xsd_chek=False. Dont check vs XSD File"
+        style.change_color(style.YELLOW)
         print(f"\t{linea_reporte}", end="\n")
         save_on_report(output_file, linea_reporte)
-
         return
 
     try:
         style.change_color(style.WHITE)
-        linea_reporte = "# ...Option xsd_check: True. Initiate check vs XSD File"
+        linea_reporte = "# ...parameter xsd_chec=True. Initiate check vs XSD File"
         print(f"\t{linea_reporte}", end="\n")
         save_on_report(output_file, linea_reporte)
 
@@ -195,6 +198,9 @@ def validate_xsd_regex():
     pass
 
 def validate_custom_rules(root, output_file):
+    style.change_color(style.WHITE)
+    linea_reporte = "Validating Custom Rules (CURP values)"
+    print(linea_reporte)
     try:
         num_registros = 0
         num_incidencias = 0
@@ -273,22 +279,22 @@ def validate_custom_rules(root, output_file):
 
                 lugar_nac_curp = curp_value[11:13]
                 if dict_renapo[lugar_nac_curp] != lugar_nac_xml:
-                    incidencia = curp_element + ": Lugar de nacimiento: " + lugar_nac_xml + ", no coincide con RENAPO: " + lugar_nac_curp
+                    incidencia = curp_element + ": Lugar de nacimiento: " + lugar_nac_xml + ", don't match RENAPO value: " + lugar_nac_curp
                     lista_incidencias.append(incidencia)
 
                 sexo_curp = curp_value[10:11]
                 if dict_renapo_sexo[sexo_curp] != sexo_xml:
-                    incidencia = curp_element + ": Sexo: " + sexo_xml + ", no coincide con RENAPO: " + sexo_curp
+                    incidencia = curp_element + ": Sexo: " + sexo_xml + ", don't match RENAPO value: " + sexo_curp
                     lista_incidencias.append(incidencia)
 
                 dia_nac_curp = curp_value[8:10]
                 if dia_nac_curp != dia_nac_xml:
-                    incidencia = curp_element + ": Día Nacimiento: " + dia_nac_xml + ", no coincide con RENAPO: " + dia_nac_curp
+                    incidencia = curp_element + ": Día Nacimiento: " + dia_nac_xml + ", don't match RENAPO value: " + dia_nac_curp
                     lista_incidencias.append(incidencia)
 
                 mes_nac_curp = curp_value[6:8]
                 if mes_nac_curp != mes_nac_xml:
-                    incidencia = curp_element + ": Mes Nacimiento: " + mes_nac_xml + ", no coincide con RENAPO: " + mes_nac_curp
+                    incidencia = curp_element + ": Mes Nacimiento: " + mes_nac_xml + ", don't match RENAPO value: " + mes_nac_curp
                     lista_incidencias.append(incidencia)
 
                 anio_nac_curp = curp_value[4:6]
@@ -300,7 +306,7 @@ def validate_custom_rules(root, output_file):
                     anio_nac_curp = 2000 + int(anio_nac_curp)
 
                 if anio_nac_curp != int(anio_nac_xml):
-                    incidencia = curp_element + ": Año Nacimiento: " + str(anio_nac_xml) + ", no coincide con RENAPO: " + str(anio_nac_curp)
+                    incidencia = curp_element + ": Año Nacimiento: " + str(anio_nac_xml) + ", don't match RENAPO value: " + str(anio_nac_curp)
                     lista_incidencias.append(incidencia)
 
                 for incidencia in lista_incidencias:
@@ -310,7 +316,7 @@ def validate_custom_rules(root, output_file):
                     save_on_report(output_file, incidencia)
 
         style.change_color(style.YELLOW)
-        linea_reporte = "# Registros: " + str(num_registros) + "|# Incidencias: " + str(num_incidencias)
+        linea_reporte = "# Records: " + str(num_registros) + "|# Errors: " + str(num_incidencias)
         print(f"\t{linea_reporte}")
         save_on_report(output_file, linea_reporte)
 
@@ -330,14 +336,11 @@ def save_on_report(output_file, linea):
 
 
 if __name__ == "__main__":
-
     # Get user parameters
     read_user_cli_args()
-
     user_args = read_user_cli_args()
-    # Check the args values
-    style.change_color(style.BLUE)
 
+    style.change_color(style.BLUE)
     print(f"\tParameters:{user_args.xml_file, user_args.xsd_check, user_args.renapo_check}", end="\n\n")
     print(f"\tParameter xml_file:\t{user_args.xml_file}", end="\n")
     print(f"\tParameter xsd_check:\t{user_args.xsd_check}", end="\n")
@@ -351,16 +354,13 @@ if __name__ == "__main__":
     print(f"\tURL WS_RENAPO:\t{ws_renapo_url}", end="\n")
 
     xsd_file = _get_xsd_file()
-    print(f"\tXSD File:\t{xsd_file}", end="\n\n")
+    print(f"\tXSD File:\t{xsd_file}", end="\n")
 
-    # MAIN
     # Create output file and save params
     output_file = create_report_file(input_xml_file, xsd_file, user_args.xsd_check, user_args.renapo_check)
-    print(f"\tOutput File:\t{output_file}", end="\n")
+    print(f"\tOutput File:\t{output_file}", end="\n\n")
 
     # Check that XML File exist
-    #print(check_xml_input_file(input_xml_file))
-    print("", end="\n")
     if check_xml_input_file(input_xml_file, output_file):
         # Validate vs XSD file
         validate_vs_xsd(input_xml_file, xsd_file, user_args.xsd_check, output_file)

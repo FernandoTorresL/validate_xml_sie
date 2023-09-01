@@ -83,10 +83,6 @@ def create_report_file(input_xml_file, xsd_file, xsd_check, renapo_check):
         return output_file
 
 def check_xml_input_file(input_xml_file, output_file):
-    style.change_color(style.WHITE)
-    linea_reporte = "Revisando existencia de archivo XML"
-    print(linea_reporte)
-
     xml_file_path = os.path.join("./", "input_files")
     file_exist=False
 
@@ -103,12 +99,17 @@ def check_xml_input_file(input_xml_file, output_file):
 
     return file_exist
 
-def read_xml_to_csv(input_xml_file, output_file):
+
+def read_xml_tree(input_xml_file):
     # Parse XML
     xml_file_path = os.path.join("./input_files/", input_xml_file)
 
     tree = ET.parse(xml_file_path)
     root = tree.getroot()
+
+    return root
+
+def read_xml_to_dataframe(root):
 
     # Extract data
     data = []
@@ -124,12 +125,15 @@ def read_xml_to_csv(input_xml_file, output_file):
 
 
 def dataframe_to_csv(df, output_file):
+    style.change_color(style.WHITE)
+    linea_reporte = "Exporting dataframe to CSV File"
+    print(linea_reporte)
 
     now = datetime.datetime.now().strftime("%Y_%m_%d_%H%M%S")
     output_csv_file = "./output_files/{datetime}_dataframe.csv".format(
         datetime=now)
 
-    df.to_csv(output_csv_file, encoding='utf-8')
+    df.to_csv(output_csv_file, encoding="utf-8")
 
     linea_reporte = "# Output CSV File generated: " + output_csv_file
 
@@ -138,26 +142,38 @@ def dataframe_to_csv(df, output_file):
 
     save_on_report(output_file, linea_reporte)
 
-def validate_vs_xsd(input_xml_file, xsd_file, output_file):
+def validate_vs_xsd(input_xml_file, xsd_file, xsd_check, output_file):
     #Validate XML against XSD
+    style.change_color(style.WHITE)
+    linea_reporte = "Revisando parametro xsd_check..."
+    print(linea_reporte)
+
+    if not user_args.xsd_check:
+        linea_reporte = "# ...Option xsd_chek: False. Dont check vs XSD File"
+        style.change_color(style.RED)
+        print(f"\t{linea_reporte}", end="\n")
+        save_on_report(output_file, linea_reporte)
+
+        return
+
     try:
         style.change_color(style.WHITE)
-        linea_reporte = "Validando XML contra XSD"
-        print(linea_reporte)
+        linea_reporte = "# ...Option xsd_check: True. Initiate check vs XSD File"
+        print(f"\t{linea_reporte}", end="\n")
+        save_on_report(output_file, linea_reporte)
 
         xml_file_path = os.path.join("./input_files/", input_xml_file)
         xsd_file_path = os.path.join("./archivo_xsd/", xsd_file)
 
         xmlschema = ET.XMLSchema(ET.parse(xsd_file_path))
-
         tree = ET.parse(xml_file_path)
 
-        if xmlschema.validate(tree) == False:
-            style.change_color(style.RED)
-            linea_reporte = "# XML MAL FORMADO contra definición XSD"
-        else:
+        if xmlschema.validate(tree):
             style.change_color(style.GREEN)
             linea_reporte = "# XML CORRECTO vs Definición XSD"
+        else:
+            style.change_color(style.RED)
+            linea_reporte = "# XML MAL FORMADO contra definición XSD"
 
         print(f"\t{linea_reporte}")
         save_on_report(output_file, linea_reporte)
@@ -178,45 +194,36 @@ def analyzing_data():
 def validate_xsd_regex():
     pass
 
-def validate_custom_rules(input_xml_file, output_file):
+def validate_custom_rules(root, output_file):
     try:
-        # Parse XML
-        xml_file_path = os.path.join("./input_files/", input_xml_file)
-
-        tree = ET.parse(xml_file_path)
-        root = tree.getroot()
-
-        # Perform your custom structure validation here
-        if root.tag != "EMPLEADOS_EMPRESA":
-            raise ValueError("Invalid root element. (EMPLEADOS_EMPRESA not present)")
-
         num_registros = 0
-        linea_reporte = ""
+        num_incidencias = 0
         # Validate specific tag elements
-        for empleado in root.findall('.//EMPLEADO'):
+        for registro in root.findall(".//EMPLEADO"):
             num_registros += 1
             lista_incidencias = []
-            # Perform validation for 'some_tag' elements here
-            print('Registro #: ' + str(num_registros))
+            # Perform validation for "some_tag" elements here
+            #print("Registro #: " + str(num_registros))
 
             # Extract CURP value
-            curp_element = empleado.find('CURP').text
+            curp_element = registro.find("CURP").text
             if curp_element is None:
+                num_incidencias += 1
                 raise ValueError("CURP element not found in XML on record # " + str(num_registros))
 
             curp_value = curp_element
 
-            print('Buscando CURP: ' + curp_value )
+            #print("Buscando CURP: " + curp_value )
             if curp_value:
                 # Extract CURP value
-                nombre_xml      = empleado.find("NOMBRE").text
-                ap_paterno_xml  = empleado.find("APELLIDO_PATERNO").text
-                ap_materno_xml  = empleado.find("APELLIDO_MATERNO").text
-                sexo_xml        = empleado.find("SEXO").text
-                lugar_nac_xml   = empleado.find("LUGAR_NACIMIENTO").text
-                dia_nac_xml     = empleado.find("DIA_NACIMIENTO").text
-                mes_nac_xml     = empleado.find("MES_NACIMIENTO").text
-                anio_nac_xml    = empleado.find("ANIO_NACIMIENTO").text
+                nombre_xml      = registro.find("NOMBRE").text
+                ap_paterno_xml  = registro.find("APELLIDO_PATERNO").text
+                ap_materno_xml  = registro.find("APELLIDO_MATERNO").text
+                sexo_xml        = registro.find("SEXO").text
+                lugar_nac_xml   = registro.find("LUGAR_NACIMIENTO").text
+                dia_nac_xml     = registro.find("DIA_NACIMIENTO").text
+                mes_nac_xml     = registro.find("MES_NACIMIENTO").text
+                anio_nac_xml    = registro.find("ANIO_NACIMIENTO").text
 
                 nombre_xml      = nombre_xml.replace("#", "Ñ")
                 ap_paterno_xml  = ap_paterno_xml.replace("#", "Ñ")
@@ -224,64 +231,64 @@ def validate_custom_rules(input_xml_file, output_file):
                     ap_materno_xml  = ap_materno_xml.replace("#", "Ñ")
 
                 dict_renapo_sexo = {
-                    'H': '1',
-                    'M': '2' 
+                    "H": "1",
+                    "M": "2" 
                 }
 
                 dict_renapo = {
-                    'AS': '01', 
-                    'BC': '02', 
-                    'BS': '03', 
-                    'CC': '04', 
-                    'CH': '08', 
-                    'CL': '05', 
-                    'CM': '06', 
-                    'CS': '07', 
-                    'DF': '09', 
-                    'DG': '10', 
-                    'GR': '12', 
-                    'GT': '11', 
-                    'HG': '13', 
-                    'JC': '14', 
-                    'MC': '15', 
-                    'MN': '16', 
-                    'MS': '17', 
-                    'NE': '35', 
-                    'NL': '19', 
-                    'NT': '18', 
-                    'OC': '20', 
-                    'PL': '21', 
-                    'QR': '23', 
-                    'QT': '22', 
-                    'SL': '25', 
-                    'SP': '24', 
-                    'SR': '26', 
-                    'TC': '27', 
-                    'TL': '29', 
-                    'TS': '28', 
-                    'VZ': '30', 
-                    'YN': '31', 
-                    'ZS': '32', 
+                    "AS": "01", 
+                    "BC": "02", 
+                    "BS": "03", 
+                    "CC": "04", 
+                    "CH": "08", 
+                    "CL": "05", 
+                    "CM": "06", 
+                    "CS": "07", 
+                    "DF": "09", 
+                    "DG": "10", 
+                    "GR": "12", 
+                    "GT": "11", 
+                    "HG": "13", 
+                    "JC": "14", 
+                    "MC": "15", 
+                    "MN": "16", 
+                    "MS": "17", 
+                    "NE": "35", 
+                    "NL": "19", 
+                    "NT": "18", 
+                    "OC": "20", 
+                    "PL": "21", 
+                    "QR": "23", 
+                    "QT": "22", 
+                    "SL": "25", 
+                    "SP": "24", 
+                    "SR": "26", 
+                    "TC": "27", 
+                    "TL": "29", 
+                    "TS": "28", 
+                    "VZ": "30", 
+                    "YN": "31", 
+                    "ZS": "32", 
                     }
 
                 lugar_nac_curp = curp_value[11:13]
                 if dict_renapo[lugar_nac_curp] != lugar_nac_xml:
-                    incidencia = curp_element + ': Lugar de nacimiento: ' + lugar_nac_xml + ', no coincide con RENAPO: ' + lugar_nac_curp
+                    incidencia = curp_element + ": Lugar de nacimiento: " + lugar_nac_xml + ", no coincide con RENAPO: " + lugar_nac_curp
                     lista_incidencias.append(incidencia)
 
                 sexo_curp = curp_value[10:11]
                 if dict_renapo_sexo[sexo_curp] != sexo_xml:
-                    incidencia = curp_element + ': Sexo: ' + sexo_xml + ', no coincide con RENAPO: ' + sexo_curp
+                    incidencia = curp_element + ": Sexo: " + sexo_xml + ", no coincide con RENAPO: " + sexo_curp
                     lista_incidencias.append(incidencia)
 
                 dia_nac_curp = curp_value[8:10]
                 if dia_nac_curp != dia_nac_xml:
-                    incidencia = curp_element + ': Día Nacimiento: ' + dia_nac_xml + ', no coincide con RENAPO: ' + dia_nac_curp
+                    incidencia = curp_element + ": Día Nacimiento: " + dia_nac_xml + ", no coincide con RENAPO: " + dia_nac_curp
                     lista_incidencias.append(incidencia)
 
                 mes_nac_curp = curp_value[6:8]
                 if mes_nac_curp != mes_nac_xml:
-                    incidencia = curp_element + ': Mes Nacimiento: ' + mes_nac_xml + ', no coincide con RENAPO: ' + mes_nac_curp
+                    incidencia = curp_element + ": Mes Nacimiento: " + mes_nac_xml + ", no coincide con RENAPO: " + mes_nac_curp
                     lista_incidencias.append(incidencia)
 
                 anio_nac_curp = curp_value[4:6]
@@ -293,19 +300,19 @@ def validate_custom_rules(input_xml_file, output_file):
                     anio_nac_curp = 2000 + int(anio_nac_curp)
 
                 if anio_nac_curp != int(anio_nac_xml):
-                    incidencia = curp_element + ': Año Nacimiento: ' + str(anio_nac_xml) + ', no coincide con RENAPO: ' + str(anio_nac_curp)
+                    incidencia = curp_element + ": Año Nacimiento: " + str(anio_nac_xml) + ", no coincide con RENAPO: " + str(anio_nac_curp)
                     lista_incidencias.append(incidencia)
 
                 for incidencia in lista_incidencias:
+                    num_incidencias += 1
                     style.change_color(style.RED)
-                    print(incidencia)
+                    #print(incidencia)
                     save_on_report(output_file, incidencia)
 
-            style.change_color(style.GREEN)
-            linea_reporte = '************'
-            print(linea_reporte)
-            save_on_report(output_file, linea_reporte)
-
+        style.change_color(style.YELLOW)
+        linea_reporte = "# Registros: " + str(num_registros) + "|# Incidencias: " + str(num_incidencias)
+        print(f"\t{linea_reporte}")
+        save_on_report(output_file, linea_reporte)
 
     except FileNotFoundError:
         print("XML file not found.")
@@ -355,7 +362,16 @@ if __name__ == "__main__":
     #print(check_xml_input_file(input_xml_file))
     print("", end="\n")
     if check_xml_input_file(input_xml_file, output_file):
-        validate_vs_xsd(input_xml_file, xsd_file, output_file)
-        df = read_xml_to_csv(input_xml_file, output_file)
+        # Validate vs XSD file
+        validate_vs_xsd(input_xml_file, xsd_file, user_args.xsd_check, output_file)
+
+        # Read XML
+        root = read_xml_tree(input_xml_file)
+
+        # Transform to dataframe
+        df = read_xml_to_dataframe(root)
+        # Transform to csv
         dataframe_to_csv(df, output_file)
-        validate_custom_rules(input_xml_file, output_file)
+
+        # Validate vs Custom Rules
+        validate_custom_rules(root, output_file)

@@ -94,7 +94,7 @@ def create_report_file(input_xml_file, xsd_file, xsd_check, renapo_check):
         return output_file
 
 def check_xml_input_file(input_xml_file, output_file):
-    xml_file_path = os.path.join("./", "input_files")
+    xml_file_path = os.path.join("./")
     file_exist=False
 
     for filename in os.listdir(xml_file_path):
@@ -113,7 +113,7 @@ def check_xml_input_file(input_xml_file, output_file):
 
 def read_xml_tree(input_xml_file):
     # Parse XML
-    xml_file_path = os.path.join("./input_files/", input_xml_file)
+    xml_file_path = os.path.join("./", input_xml_file)
 
     tree = ET.parse(xml_file_path)
     root = tree.getroot()
@@ -177,7 +177,7 @@ def validate_vs_xsd(input_xml_file, xsd_file, xsd_check, output_file):
         print(f"{linea_reporte}", end="\n")
         save_on_report(output_file, linea_reporte)
 
-        xml_file_path = os.path.join("./input_files/", input_xml_file)
+        xml_file_path = os.path.join("./", input_xml_file)
         xsd_file_path = os.path.join("./archivo_xsd/", xsd_file)
 
         xmlschema = ET.XMLSchema(ET.parse(xsd_file_path))
@@ -209,7 +209,7 @@ def analyzing_data():
 def validate_xsd_regex():
     pass
 
-def validate_custom_rules(root, output_file):
+def validate_custom_rules(root, renapo_gender_dict, renapo_state_dict, output_file):
     style.change_color(style.WHITE)
     linea_reporte = "# Validating Custom Rules (CURP values)"
     print(f"\t{linea_reporte}", end="\n")
@@ -218,6 +218,8 @@ def validate_custom_rules(root, output_file):
     try:
         num_registros = 0
         num_incidencias = 0
+        renapo_gender_dict = dict(renapo_gender_dict)
+        renapo_state_dict = dict(renapo_state_dict)
         # Validate specific tag elements
         for registro in root.findall(".//EMPLEADO"):
             num_registros += 1
@@ -249,54 +251,13 @@ def validate_custom_rules(root, output_file):
                 if ap_materno_xml:
                     ap_materno_xml  = ap_materno_xml.replace("#", "Ñ")
 
-                dict_renapo_sexo = {
-                    "H": "1",
-                    "M": "2" 
-                }
-
-                dict_renapo = {
-                    "AS": "01",
-                    "BC": "02",
-                    "BS": "03",
-                    "CC": "04",
-                    "CH": "08",
-                    "CL": "05",
-                    "CM": "06",
-                    "CS": "07",
-                    "DF": "09",
-                    "DG": "10",
-                    "GR": "12",
-                    "GT": "11",
-                    "HG": "13",
-                    "JC": "14",
-                    "MC": "15",
-                    "MN": "16",
-                    "MS": "17",
-                    "NE": "35",
-                    "NL": "19",
-                    "NT": "18",
-                    "OC": "20",
-                    "PL": "21",
-                    "QR": "23",
-                    "QT": "22",
-                    "SL": "25",
-                    "SP": "24",
-                    "SR": "26",
-                    "TC": "27",
-                    "TL": "29",
-                    "TS": "28",
-                    "VZ": "30",
-                    "YN": "31",
-                    "ZS": "32",
-                    }
-
-                lugar_nac_curp = curp_value[11:13]
-                if dict_renapo[lugar_nac_curp] != lugar_nac_xml:
+                lugar_nac_curp = str(curp_value[11:13])
+                if renapo_state_dict[lugar_nac_curp] != lugar_nac_xml:
                     incidencia = curp_element + "|Lugar de nacimiento: " + lugar_nac_xml + ", don't match CURP value: " + lugar_nac_curp
                     lista_incidencias.append(incidencia)
 
-                sexo_curp = curp_value[10:11]
-                if dict_renapo_sexo[sexo_curp] != sexo_xml:
+                sexo_curp = str(curp_value[10:11])
+                if renapo_gender_dict[sexo_curp] != sexo_xml:
                     incidencia = curp_element + "|Sexo: " + sexo_xml + ", don't match CURP value: " + sexo_curp
                     lista_incidencias.append(incidencia)
 
@@ -340,7 +301,7 @@ def validate_custom_rules(root, output_file):
     except ValueError as ve:
         print("Validation error:", ve)
 
-def search_on_ws(urlWSRENAPO, root, renapo_check, output_file):
+def search_on_ws(urlWSRENAPO, root, renapo_gender_dict, renapo_state_dict, renapo_check, output_file):
     style.change_color(style.WHITE)
     linea_reporte = "# Validating XML CURP's VS Web Service RENAPO..."
     print(linea_reporte)
@@ -356,6 +317,8 @@ def search_on_ws(urlWSRENAPO, root, renapo_check, output_file):
     try:
         num_curps = 0
         num_incidencias = 0
+        renapo_gender_dict = dict(renapo_gender_dict)
+        renapo_state_dict = dict(renapo_state_dict)
         style.change_color(style.WHITE)
         linea_reporte = "# ...parameter renapo_check=True. Begin to check VS WS"
         print(f"{linea_reporte}", end="\n")
@@ -418,54 +381,13 @@ def search_on_ws(urlWSRENAPO, root, renapo_check, output_file):
                             incidencia = curp_value + "|APELLIDO_MATERNO in XML: " + ap_materno_xml + ", don't match RENAPO response: " + response_ws_renapo.Apellido2
                         lista_incidencias_renapo.append(incidencia)
 
-                    dict_renapo_sexo = {
-                        "H": "1",
-                        "M": "2"
-                    }
-
-                    dict_renapo = {
-                        "AS": "01",
-                        "BC": "02",
-                        "BS": "03",
-                        "CC": "04",
-                        "CH": "08",
-                        "CL": "05",
-                        "CM": "06",
-                        "CS": "07",
-                        "DF": "09",
-                        "DG": "10",
-                        "GR": "12",
-                        "GT": "11",
-                        "HG": "13",
-                        "JC": "14",
-                        "MC": "15",
-                        "MN": "16",
-                        "MS": "17",
-                        "NE": "35",
-                        "NL": "19",
-                        "NT": "18",
-                        "OC": "20",
-                        "PL": "21",
-                        "QR": "23",
-                        "QT": "22",
-                        "SL": "25",
-                        "SP": "24",
-                        "SR": "26",
-                        "TC": "27",
-                        "TL": "29",
-                        "TS": "28",
-                        "VZ": "30",
-                        "YN": "31",
-                        "ZS": "32",
-                        }
-
                     lugar_nac_curp = curp_value[11:13]
-                    if dict_renapo[lugar_nac_curp] != lugar_nac_xml:
+                    if renapo_state_dict[lugar_nac_curp] != lugar_nac_xml:
                         incidencia = curp_value + "|Lugar de nacimiento: " + lugar_nac_xml + ", don't match RENAPO response: " + lugar_nac_curp
                         lista_incidencias_renapo.append(incidencia)
 
                     sexo_curp = curp_value[10:11]
-                    if dict_renapo_sexo[sexo_curp] != sexo_xml:
+                    if renapo_gender_dict[sexo_curp] != sexo_xml:
                         incidencia = curp_value + "|Sexo: " + sexo_xml + ", don't match RENAPO response: " + sexo_curp
                         lista_incidencias_renapo.append(incidencia)
 
@@ -520,6 +442,48 @@ def save_on_report(output_file, linea):
 
 
 if __name__ == "__main__":
+
+    renapo_gender_dict = {
+                    "H": "1",
+                    "M": "2"
+                }
+
+    renapo_state_dict = {
+        "AS": "01",
+        "BC": "02",
+        "BS": "03",
+        "CC": "04",
+        "CH": "08",
+        "CL": "05",
+        "CM": "06",
+        "CS": "07",
+        "DF": "09",
+        "DG": "10",
+        "GR": "12",
+        "GT": "11",
+        "HG": "13",
+        "JC": "14",
+        "MC": "15",
+        "MN": "16",
+        "MS": "17",
+        "NE": "35",
+        "NL": "19",
+        "NT": "18",
+        "OC": "20",
+        "PL": "21",
+        "QR": "23",
+        "QT": "22",
+        "SL": "25",
+        "SP": "24",
+        "SR": "26",
+        "TC": "27",
+        "TL": "29",
+        "TS": "28",
+        "VZ": "30",
+        "YN": "31",
+        "ZS": "32",
+        }
+
     # Get user parameters
     read_user_cli_args()
     user_args = read_user_cli_args()
@@ -558,7 +522,7 @@ if __name__ == "__main__":
         dataframe_to_csv(df, output_file)
 
         # Validate vs Custom Rules
-        validate_custom_rules(root, output_file)
+        validate_custom_rules(root, renapo_gender_dict, renapo_state_dict, output_file)
 
         # Validate vs WS
-        search_on_ws(ws_renapo_url, root, user_args.renapo_check, output_file)
+        search_on_ws(ws_renapo_url, root, renapo_gender_dict, renapo_state_dict, user_args.renapo_check, output_file)

@@ -3,6 +3,7 @@
 import argparse
 import datetime
 import os
+import threading
 from configparser import ConfigParser
 
 import lxml.etree as ET
@@ -302,6 +303,104 @@ def validate_custom_rules(root, renapo_gender_dict, renapo_state_dict, output_fi
         print("Validation error:", ve)
 
 def search_on_ws(urlWSRENAPO, root, renapo_gender_dict, renapo_state_dict, renapo_check, output_file):
+
+    def check_curp(curp_element,curp):
+        curp_value = curp_element.text
+        if curp_value is None:
+            nonlocal num_incidencias
+            num_incidencias += 1
+            raise ValueError(f"CURP element not found in XML on record # {num_curps}")
+
+        cliente = Client(urlWSRENAPO, cache=None)
+        cliente.set_options(location=urlWSRENAPO)
+        response_ws_renapo = cliente.service.ConsultaDatosCURP(curp_value)
+
+        # ... process the response_ws_renapo ...
+        if response_ws_renapo.CodigoError == 0:
+            if curp_value:
+                # Extract CURP value
+                nombre_xml      = curp.find("NOMBRE").text
+                ap_paterno_xml  = curp.find("APELLIDO_PATERNO").text
+                ap_materno_xml  = curp.find("APELLIDO_MATERNO").text
+                sexo_xml        = curp.find("SEXO").text
+                lugar_nac_xml   = curp.find("LUGAR_NACIMIENTO").text
+                dia_nac_xml     = curp.find("DIA_NACIMIENTO").text
+                mes_nac_xml     = curp.find("MES_NACIMIENTO").text
+                anio_nac_xml    = curp.find("ANIO_NACIMIENTO").text
+
+                nombre_xml      = nombre_xml.replace("#", "Ñ")
+                ap_paterno_xml  = ap_paterno_xml.replace("#", "Ñ")
+                if ap_materno_xml:
+                    ap_materno_xml  = ap_materno_xml.replace("#", "Ñ")
+
+                if nombre_xml != response_ws_renapo.Nombres:
+                    incidencia = curp_value + "|NOMBRE(S) in XML: " + nombre_xml + ", don't match RENAPO response: " + response_ws_renapo.Nombres
+                    lista_incidencias_renapo.append(incidencia)
+                    num_incidencias += 1
+                    save_on_report(output_file, incidencia)
+
+                if ap_paterno_xml != response_ws_renapo.Apellido1:
+                    incidencia = curp_value + "|APELLIDO_PATERNO in XML: " + ap_paterno_xml + ", don't match RENAPO response: " + response_ws_renapo.Apellido1
+                    lista_incidencias_renapo.append(incidencia)
+                    num_incidencias += 1
+                    save_on_report(output_file, incidencia)
+
+                if ap_materno_xml != response_ws_renapo.Apellido2:
+                    if response_ws_renapo.Apellido2 == None:
+                        incidencia = curp_value + "|APELLIDO_MATERNO in XML: " + ap_materno_xml + ", don't match RENAPO response: NULL"
+                    else:
+                        incidencia = curp_value + "|APELLIDO_MATERNO in XML: " + ap_materno_xml + ", don't match RENAPO response: " + response_ws_renapo.Apellido2
+                    lista_incidencias_renapo.append(incidencia)
+                    num_incidencias += 1
+                    save_on_report(output_file, incidencia)
+
+                lugar_nac_curp = curp_value[11:13]
+                if renapo_state_dict[lugar_nac_curp] != lugar_nac_xml:
+                    incidencia = curp_value + "|Lugar de nacimiento: " + lugar_nac_xml + ", don't match RENAPO response: " + lugar_nac_curp
+                    lista_incidencias_renapo.append(incidencia)
+                    num_incidencias += 1
+                    save_on_report(output_file, incidencia)
+
+                sexo_curp = curp_value[10:11]
+                if renapo_gender_dict[sexo_curp] != sexo_xml:
+                    incidencia = curp_value + "|Sexo: " + sexo_xml + ", don't match RENAPO response: " + sexo_curp
+                    lista_incidencias_renapo.append(incidencia)
+                    num_incidencias += 1
+                    save_on_report(output_file, incidencia)
+
+                dia_nac_curp = curp_value[8:10]
+                if dia_nac_curp != dia_nac_xml:
+                    incidencia = curp_value + "|Día Nacimiento: " + dia_nac_xml + ", don't match RENAPO response: " + dia_nac_curp
+                    lista_incidencias_renapo.append(incidencia)
+                    num_incidencias += 1
+                    save_on_report(output_file, incidencia)
+
+                mes_nac_curp = curp_value[6:8]
+                if mes_nac_curp != mes_nac_xml:
+                    incidencia = curp_value + "|Mes Nacimiento: " + mes_nac_xml + ", don't match RENAPO response: " + mes_nac_curp
+                    lista_incidencias_renapo.append(incidencia)
+                    num_incidencias += 1
+                    save_on_report(output_file, incidencia)
+
+                anio_nac_curp = curp_value[4:6]
+                dif_homonimia = curp_value[16:17]
+
+                if dif_homonimia.isdigit():
+                    anio_nac_curp = 1900 + int(anio_nac_curp)
+                else:
+                    anio_nac_curp = 2000 + int(anio_nac_curp)
+
+                if anio_nac_curp != int(anio_nac_xml):
+                    incidencia = curp_value + "|Año Nacimiento: " + str(anio_nac_xml) + ", don't match RENAPO response: " + str(anio_nac_curp)
+                    lista_incidencias_renapo.append(incidencia)
+                    num_incidencias += 1
+                    save_on_report(output_file, incidencia)
+            else:
+                incidencia = curp_value + "|No data from WS-RENAPO"
+                lista_incidencias_renapo.append(incidencia)
+                num_incidencias += 1
+                save_on_report(output_file, incidencia)
+
     style.change_color(style.WHITE)
     linea_reporte = "# Validating XML CURP's VS Web Service RENAPO..."
     print(linea_reporte)
@@ -325,116 +424,33 @@ def search_on_ws(urlWSRENAPO, root, renapo_gender_dict, renapo_state_dict, renap
         save_on_report(output_file, linea_reporte)
 
         linea_reporte = ""
+        threads = []
 
         for curp in root.findall(".//EMPLEADO"):
             num_curps += 1
             lista_incidencias_renapo = []
+            style.change_color(style.RED)
 
-            # Extract CURP value
-            curp_element = curp.find("CURP").text
-            style.change_color(style.WHITE)
-            print("#: " + str(num_curps))
+            t = threading.Thread(target=check_curp, args=(curp.find("CURP"),curp))
+            threads.append(t)
+            t.start()
 
-            if curp_element is None:
-                num_incidencias += 1
-                raise ValueError("CURP element not found in XML on record # " + str(num_curps))
-
-            curp_value = curp_element
-
-            # Invoke RENAPO_WS using the CURP value
-            style.change_color(style.BLUE)
-            print(f"\tSearching: {curp_value}")
-            cliente = Client(urlWSRENAPO,cache=None)
-            cliente.set_options(location=urlWSRENAPO)
-            response_ws_renapo = cliente.service.ConsultaDatosCURP(curp_value)
-            #print(response_ws_renapo)
-
-            if response_ws_renapo.CodigoError == 0:
-                if curp_value:
-                    # Extract CURP value
-                    nombre_xml      = curp.find("NOMBRE").text
-                    ap_paterno_xml  = curp.find("APELLIDO_PATERNO").text
-                    ap_materno_xml  = curp.find("APELLIDO_MATERNO").text
-                    sexo_xml        = curp.find("SEXO").text
-                    lugar_nac_xml   = curp.find("LUGAR_NACIMIENTO").text
-                    dia_nac_xml     = curp.find("DIA_NACIMIENTO").text
-                    mes_nac_xml     = curp.find("MES_NACIMIENTO").text
-                    anio_nac_xml    = curp.find("ANIO_NACIMIENTO").text
-
-                    nombre_xml      = nombre_xml.replace("#", "Ñ")
-                    ap_paterno_xml  = ap_paterno_xml.replace("#", "Ñ")
-                    if ap_materno_xml:
-                        ap_materno_xml  = ap_materno_xml.replace("#", "Ñ")
-
-                    if nombre_xml != response_ws_renapo.Nombres:
-                        incidencia = curp_value + "|NOMBRE(S) in XML: " + nombre_xml + ", don't match RENAPO response: " + response_ws_renapo.Nombres
-                        lista_incidencias_renapo.append(incidencia)
-
-                    if ap_paterno_xml != response_ws_renapo.Apellido1:
-                        incidencia = curp_value + "|APELLIDO_PATERNO in XML: " + ap_paterno_xml + ", don't match RENAPO response: " + response_ws_renapo.Apellido1
-                        lista_incidencias_renapo.append(incidencia)
-
-                    if ap_materno_xml != response_ws_renapo.Apellido2:
-                        if response_ws_renapo.Apellido2 == None:
-                            incidencia = curp_value + "|APELLIDO_MATERNO in XML: " + ap_materno_xml + ", don't match RENAPO response: NULL"
-                        else:
-                            incidencia = curp_value + "|APELLIDO_MATERNO in XML: " + ap_materno_xml + ", don't match RENAPO response: " + response_ws_renapo.Apellido2
-                        lista_incidencias_renapo.append(incidencia)
-
-                    lugar_nac_curp = curp_value[11:13]
-                    if renapo_state_dict[lugar_nac_curp] != lugar_nac_xml:
-                        incidencia = curp_value + "|Lugar de nacimiento: " + lugar_nac_xml + ", don't match RENAPO response: " + lugar_nac_curp
-                        lista_incidencias_renapo.append(incidencia)
-
-                    sexo_curp = curp_value[10:11]
-                    if renapo_gender_dict[sexo_curp] != sexo_xml:
-                        incidencia = curp_value + "|Sexo: " + sexo_xml + ", don't match RENAPO response: " + sexo_curp
-                        lista_incidencias_renapo.append(incidencia)
-
-                    dia_nac_curp = curp_value[8:10]
-                    if dia_nac_curp != dia_nac_xml:
-                        incidencia = curp_value + "|Día Nacimiento: " + dia_nac_xml + ", don't match RENAPO response: " + dia_nac_curp
-                        lista_incidencias_renapo.append(incidencia)
-
-                    mes_nac_curp = curp_value[6:8]
-                    if mes_nac_curp != mes_nac_xml:
-                        incidencia = curp_value + "|Mes Nacimiento: " + mes_nac_xml + ", don't match RENAPO response: " + mes_nac_curp
-                        lista_incidencias_renapo.append(incidencia)
-
-                    anio_nac_curp = curp_value[4:6]
-                    dif_homonimia = curp_value[16:17]
-
-                    if dif_homonimia.isdigit():
-                        anio_nac_curp = 1900 + int(anio_nac_curp)
-                    else:
-                        anio_nac_curp = 2000 + int(anio_nac_curp)
-
-                    if anio_nac_curp != int(anio_nac_xml):
-                        incidencia = curp_value + "|Año Nacimiento: " + str(anio_nac_xml) + ", don't match RENAPO response: " + str(anio_nac_curp)
-                        lista_incidencias_renapo.append(incidencia)
-            else:
-                incidencia = curp_value + "|No data from WS-RENAPO"
-                lista_incidencias_renapo.append(incidencia)
-
-            for incidencia in lista_incidencias_renapo:
-                num_incidencias += 1
-                style.change_color(style.RED)
-                #print(incidencia)
-                save_on_report(output_file, incidencia)
+        for t in threads:
+            t.join()
 
         style.change_color(style.RED)
         linea_reporte = "#Total Records: " + str(num_curps) + "|Total Errors: (WS-RENAPO): " + str(num_incidencias)
         print(f"\n\t{linea_reporte}")
         save_on_report(output_file, linea_reporte)
-
+    except Exception as e:
+        # Handle exceptions here...
+        print("Exception!")
     except FileNotFoundError:
         print("XML file not found.")
     except ET.ParseError:
         print("Error parsing XML file.")
     except ValueError as ve:
         print("Validation error:", ve)
-    #except requests.RequestException as re:
-    #    print("Error making RENAPO_WS request:", re)
 
 def save_on_report(output_file, linea):
     with open(output_file, mode="a", newline="", encoding="utf-8") as f:
@@ -518,6 +534,7 @@ if __name__ == "__main__":
 
         # Transform to dataframe
         df = read_xml_to_dataframe(root)
+
         # Transform to csv
         dataframe_to_csv(df, output_file)
 

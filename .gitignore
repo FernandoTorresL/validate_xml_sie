@@ -417,6 +417,7 @@ OLDNotebook_admin_users.ipynb
 
 # Ignore folders
 /tmp_working_files/
+/input_files/
 
 # Ignore test files
 validate_xml_sie_*

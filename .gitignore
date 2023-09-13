@@ -418,9 +418,11 @@ OLDNotebook_admin_users.ipynb
 # Ignore folders
 /tmp_working_files/
 /input_files/
+/archivo_xsd/
+/archivo_wsdl/
 
 # Ignore test files
-validate_xml_sie_*
+tmp.py
 
 # Ignore secret file
 secrets.ini

@@ -5,7 +5,8 @@ import datetime
 import os
 import queue
 import re
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import urllib
+from concurrent.futures import ThreadPoolExecutor
 from configparser import ConfigParser
 
 import lxml.etree as ET
@@ -51,29 +52,17 @@ def read_user_cli_args():
     return parser.parse_args()
 
 
-def _get_ws_renapo_url():
-    """Fetch the WS-URL from your configuration file.
-
-    Expects a configuration file named "secrets.ini" with structure:
-
-        [urls]
-        ws_url_renapo=<YOUR-WS_RENAPO-URL>
-    """
+def _get_ws_url():
     config = ConfigParser()
     config.read("secrets.ini")
-    return config["urls"]["ws_url_renapo"]
+    return config["urls"]["ws_url"]
+
+def _get_wsdl_filename():
+    config = ConfigParser()
+    config.read("secrets.ini")
+    return config["files"]["wsdl_filename"]
 
 def _get_xsd_file():
-    """Fetch the XSD definition file from your configuration file.
-
-    Expects a xsd definition file named "xsd_file.xsd":
-
-        [urls]
-        ws_url_renapo=<YOUR-WS_RENAPO-URL>
-
-        [files]
-        xsd_file=filename.xsd
-    """
     config = ConfigParser()
     config.read("secrets.ini")
     return config["files"]["xsd_file"]
@@ -368,10 +357,10 @@ def validate_custom_rules(root, renapo_gender_dict, renapo_state_dict, output_fi
                         incidencia = curp_element + "|Value on xml tag <SEXO>: " + str(sexo_xml) + ", must be 1 or 2"
                         lista_incidencias.append(incidencia)
 
-                # if lugar_nac_xml != None:
-                #     if not valida_lug_nac(lugar_nac_xml):
-                #         incidencia = curp_element + "|Value on xml tag <LUGAR_NACIMIENTO>: " + str(lugar_nac_xml) + ", must be 1 or 2"
-                #         lista_incidencias.append(incidencia)
+                if lugar_nac_xml != None:
+                    if not valida_lug_nac(lugar_nac_xml):
+                        incidencia = curp_element + "|Value on xml tag <LUGAR_NACIMIENTO>: " + str(lugar_nac_xml) + ", must be 01-32, 35"
+                        lista_incidencias.append(incidencia)
 
                 if dia_nac_xml != None:
                     if not valida_dia(dia_nac_xml):
@@ -556,7 +545,7 @@ def create_queue(root):
     progreso.close()
     return data_queue
 
-def search_on_ws(urlWSRENAPO, root, renapo_check, use_threads, output_file):
+def search_on_ws(urlWSRENAPO, wsdl_filename, root, renapo_check, use_threads, output_file):
     # Use WS RENAPO?
     style.change_color(style.WHITE)
     linea_reporte = "# Search data on WS RENAPO..."
@@ -594,9 +583,9 @@ def search_on_ws(urlWSRENAPO, root, renapo_check, use_threads, output_file):
         style.change_color(style.GREEN)
 
         with tqdm(total=data_list.qsize(), desc = "Consultando", leave=True, unit = "queries") as pbar:
-            consultaWS(data_list, pbar, output_file, ws_renapo_url)
+            consultaWS(data_list, pbar, output_file, ws_url, wsdl_filename)
 
-def create_threads(data_list_threads, output_file, ws_renapo_url):
+def create_threads(data_list_threads, output_file, ws_url):
     threads = os.cpu_count()
 
     linea_reporte = "# Using " + str(threads) + " thread(s)"
@@ -606,9 +595,9 @@ def create_threads(data_list_threads, output_file, ws_renapo_url):
 
     with tqdm(total=data_list_threads.qsize(), desc="Consultando", leave=True, unit="queries") as pbar:
         with ThreadPoolExecutor(max_workers = threads, thread_name_prefix="WS_queries") as ex:
-            futures = [ex.submit(consultaWS, data_list_threads, pbar, output_file, ws_renapo_url) for i in range(threads)]
+            futures = [ex.submit(consultaWS, data_list_threads, pbar, output_file, ws_url, wsdl_filename) for i in range(threads)]
 
-def consultaWS(data_list, pbar, output_file, urlWSRENAPO):
+def consultaWS(data_list, pbar, output_file, ws_url, wsdl_filename):
     while not data_list.empty():
         try:
             style.change_color(style.WHITE)
@@ -629,32 +618,34 @@ def consultaWS(data_list, pbar, output_file, urlWSRENAPO):
 
             style.change_color(style.GREEN)
 
-            cliente = Client(urlWSRENAPO, cache=None)
-            cliente.set_options(location=urlWSRENAPO)
-            response_ws_renapo = cliente.service.ConsultaDatosCURP(curp_value)
+            path_to_wsdl = urllib.parse.urljoin('file:', urllib.request.pathname2url(os.path.abspath(wsdl_filename)))
 
-            # ... process the response_ws_renapo ...
-            if response_ws_renapo.CodigoError == 0:
+            cliente = Client(path_to_wsdl)
+            cliente.set_options(location=ws_url)
+            response_ws = cliente.service.ConsultaDatosCURP(curp_value)
+
+            # ... process the response_ws ...
+            if response_ws.CodigoError == 0:
                 nombre_xml = nombre_xml.replace("#", "Ñ")
-                if nombre_xml != response_ws_renapo.Nombres:
-                    incidencia = curp_value + "|NOMBRE(S) in XML: " + nombre_xml + ", doesn't match RENAPO response: " + response_ws_renapo.Nombres
+                if nombre_xml != response_ws.Nombres:
+                    incidencia = curp_value + "|NOMBRE(S) in XML: " + nombre_xml + ", doesn't match RENAPO response: " + response_ws.Nombres
                     record_data.append(incidencia)
                     save_on_report(output_file, incidencia)
 
                 if ap_paterno_xml != None:
                     ap_paterno_xml = ap_paterno_xml.replace("#", "Ñ")
-                if ap_paterno_xml != response_ws_renapo.Apellido1:
-                    incidencia = curp_value + "|APELLIDO_PATERNO in XML: " + ap_paterno_xml + ", doesn't match RENAPO response: " + response_ws_renapo.Apellido1
+                if ap_paterno_xml != response_ws.Apellido1:
+                    incidencia = curp_value + "|APELLIDO_PATERNO in XML: " + ap_paterno_xml + ", doesn't match RENAPO response: " + response_ws.Apellido1
                     record_data.append(incidencia)
                     save_on_report(output_file, incidencia)
 
                 if ap_materno_xml != None:
                     ap_materno_xml = ap_materno_xml.replace("#", "Ñ")
-                if ap_materno_xml != response_ws_renapo.Apellido2:
-                    if response_ws_renapo.Apellido2 == None:
+                if ap_materno_xml != response_ws.Apellido2:
+                    if response_ws.Apellido2 == None:
                         incidencia = curp_value + "|APELLIDO_MATERNO in XML: " + ap_materno_xml + ", doesn't match RENAPO response: NULL"
                     else:
-                        incidencia = curp_value + "|APELLIDO_MATERNO in XML: " + ap_materno_xml + ", doesn't match RENAPO response: " + response_ws_renapo.Apellido2
+                        incidencia = curp_value + "|APELLIDO_MATERNO in XML: " + ap_materno_xml + ", doesn't match RENAPO response: " + response_ws.Apellido2
                     record_data.append(incidencia)
                     save_on_report(output_file, incidencia)
 
@@ -717,7 +708,7 @@ if __name__ == "__main__":
     RFCex = re.compile(r'([A-Z,&,Ñ]{3,4}([0-9]{2})(0[1-9]|1[0-2])(0[1-9]|1[0-9]|2[0-9]|3[0-1])([A-Z]|[0-9]){2}([A]|[0-9]){1})')
     sexoEx = re.compile(r'[12]')
     entidadEx = re.compile(r'(AS|BC|BS|CC|CL|CM|CS|CH|DF|DG|GT|GR|HG|JC|MC|MN|MS|NT|NL|OC|PL|QT|QR|SP|SL|SR|TC|TS|TL|VZ|YN|ZS|NE)')
-    lug_nacEx = (r'(0[1-9]|[1-2][0-9]|3[0-2])')
+    lug_nacEx = re.compile(r'(0[1-9]|[1-2][0-9]|3[0-2])|35')
     diaEx = re.compile(r'(0[1-9]|1[0-9]|2[0-9]|3[0-1])')
     mesEx = re.compile(r'(0[1-9]|1[0-2])')
     anioEx = re.compile(r'([1][9][0-9][0-9])|([2][0][0-9][0-9])')
@@ -782,8 +773,11 @@ if __name__ == "__main__":
     input_xml_file = user_args.xml_file[0]
     print(f"\tInput XML File:\t{input_xml_file}", end="\n")
 
-    ws_renapo_url = _get_ws_renapo_url()
-    print(f"\tURL WS_RENAPO:\t{ws_renapo_url}", end="\n")
+    ws_url = _get_ws_url()
+    print(f"\tURL WS:\t{ws_url}", end="\n")
+
+    wsdl_filename = _get_wsdl_filename()
+    print(f"\tLocal WSDL Filename:\t{wsdl_filename}", end="\n")
 
     xsd_file = _get_xsd_file()
     print(f"\tXSD File:\t{xsd_file}", end="\n")
@@ -809,4 +803,4 @@ if __name__ == "__main__":
         validate_custom_rules(root, renapo_gender_dict, renapo_state_dict, output_file)
 
         # Validate vs WS
-        search_on_ws(ws_renapo_url, root, user_args.renapo_check, user_args.use_threads, output_file)
+        search_on_ws(ws_url, wsdl_filename, root, user_args.renapo_check, user_args.use_threads, output_file)

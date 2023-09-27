@@ -20,7 +20,7 @@ Before this project was implemented, this office only use a checklist and a spec
 
 This project was build with the use of: 
 
-- Python v?.??
+- Python v3.11.4
 
 ## Installation
 
@@ -37,15 +37,30 @@ $ pip3 install -r requirements.txt
 ```
 
 Windows:
-
 ```sh
 $ python -m venv venv
 $ .\venv\Scripts\activate
 $ pip3 install -r requirements.txt
 (venv) $
-
 ```
-> This prompt may vary if you use another shell configuration, like pk10
+
+Windows 10 with Git bash terminal:
+```sh
+$ python -m venv venv
+$ source ./venv/Scripts/activate
+$ pip3 install -r requirements.txt
+(venv) $
+```
+
+Windows 10 with powershell terminal:
+```sh
+PS> python -m venv venv
+PS> .\.venv\Scripts\Activate.ps1
+PS> pip3 install -r requirements.txt
+(.venv) PS>
+```
+
+> This prompt may vary if you use another shell configuration, like pk10 or git bash
 
 Later, to deactivate the virtual environment
 OS X & Linux & Windows:
@@ -55,11 +70,90 @@ OS X & Linux & Windows:
 $
 ```
 
-## Run the project
+## View help and arguments
 
 ```sh
-python validate_xml_sie.py
+python3 validate_xml_sie.py --help
 ```
+
+```sh
+usage: validate_xml_sie.py [-h] [-x] [-r] [-u] xml_file [xml_file ...]
+
+validate xml file and xml tags vs a Web Service data
+
+positional arguments:
+  xml_file            enter the xml filename
+
+options:
+  -h, --help          show this help message and exit
+  -x, --xsd_check     check xml file vs xsd definition file
+  -r, --renapo_check  check xml data vs WS RENAPO
+  -u, --use_threads   use threads
+``````
+> If using another Python version try: python validate_xml_sie.py --help
+
+## Run the project
+
+Before run this project, edit or copy the following files:
+
+* archivo_xsd/<xsd_filename>.xsd
+* secrets.ini (Edit here variable xsd_file with <xsd_filename>.xsd)
+
+* archivo_wsdl/<wsdl_filename>.wsdl
+* secrets.ini (Edit here variable wsdl_filename with <wsdl_filename>.wsdl)
+
+* secrets.ini (Edit here variable ws_url with the Web Service URL)
+
+Then, you can execute the program:
+
+```sh
+python validate_xml_sie.py <xml_filename.xml> -x -r -u
+```
+
+## Example
+
+```sh
+python validate_xml_sie.py Example.xml --xsd_check --renapo_check --use_threads
+```
+
+### Example output:
+
+```sh
+Parameters:(['Example.xml'], True, True, True)
+
+	Parameter xml_file:	['Example.xml']
+	Parameter xsd_check:	True
+	Parameter renapo_check:	True
+	Parameter use_thread:	True
+
+	Input XML File:	Example.xml
+	URL WS:	<WS URL>
+	Local WSDL Filename:	archivo_wsdl/WSDL_file.wsdl
+	XSD File:	xsd_file.xsd
+
+	Report File:	./output_files/2023_09_13_132424_report.csv
+
+# Validating XML VS XSD Definition file...
+# ...parameter xsd_check=True. Initiate check vs XSD File
+	# XML CORRECTO vs Definición XSD
+Exporting XML file to dataframe
+Exporting dataframe to CSV File
+	Output CSV File generated: ./output_files/2023_09_13_132425_dataframe.csv
+	# Validating Custom Rules (CURP values)
+#Total Records: 5697|Total Errors: 2
+
+# Search data on WS RENAPO...
+# Check vs WS RENAPO. Check thread option...
+Recuperando: 100%|█████████████████████████████████████████████████████████████████████████████| 5697/5697 [00:00<00:00, 47339.61Reg/s]
+	# ...parameter use_threads=True. Will use threads
+# Using 8 thread(s)
+Consultando: 100%|████████████████████████████████████████████████████████████████████████████| 5697/5697 [07:15<00:00, 13.07queries/s]
+```
+
+### Output files
+
+* ./output_files/<time_stamp>_dataframe.csv, CSV file with the data extracted from xml file
+* ./output_files/<time_stamp>_report.csv, CSV file with errors description and details
 
 ## Contributing to this repo
 

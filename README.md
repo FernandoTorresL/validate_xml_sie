@@ -9,7 +9,7 @@ Validate XML files structure and data for use with SIE (IMSS) system.
 
 ## Introduction
 
-This project is a project that will be operated by workers of the _Coordinación de Afiliación - División de Soporte a los Procesos de Afiliación_, an office on Instituto Mexicano del Seguro Social (IMSS, DIR, CA, DSPA)
+This project is a project that will be operated by workers of the _Coordinación de Afiliación - División de Soporte a los Procesos de Afiliación_, an office on Instituto Mexicano del Seguro Social (IMSS, DIR, CA, DSPA).
 
 This project must read a XML file, validate structure, validate data vs catalogs, and with the use of Web Service from RENAPO, validate data from a valid CURP's data.
 With this project, users can validate and verify that the XML files are well formed and had valid data before send it to system SIE.

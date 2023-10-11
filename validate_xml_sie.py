@@ -21,6 +21,142 @@ from tqdm import tqdm
 
 import style
 
+
+def valida_curp(data):
+    """
+
+    Returns:
+
+    """
+
+    curp_ex = re.compile(CURP_PATTERN)
+    return bool(curp_ex.fullmatch(data))
+
+
+def valida_sexo(data):
+    """
+
+    Returns:
+
+    """
+
+    sexo_ex = re.compile(SEXO_PATTERN)
+    return bool(sexo_ex.fullmatch(data))
+
+
+def valida_lug_nac(data):
+    """
+
+    Returns:
+
+    """
+
+    lug_nac_ex = re.compile(LUG_NAC_PATTERN)
+    return bool(lug_nac_ex.fullmatch(data))
+
+
+def valida_dia(data):
+    """
+
+    Returns:
+
+    """
+
+    dia_ex = re.compile(DIA_PATTERN)
+    return bool(dia_ex.fullmatch(data))
+
+
+def valida_mes(data):
+    """
+
+    Returns:
+
+    """
+
+    mes_ex = re.compile(MES_PATTERN)
+    return bool(mes_ex.fullmatch(data))
+
+
+def valida_anio(data):
+    """
+
+    Returns:
+
+    """
+
+    anio_ex = re.compile(ANIO_PATTERN)
+    return bool(anio_ex.fullmatch(data))
+
+
+def valida_desc_ocupa(data):
+    """
+
+    Returns:
+
+    """
+
+    des_ocupa_ex = re.compile(DESC_OCUP_PATTERN)
+    return bool(des_ocupa_ex.fullmatch(data))
+
+
+def valida_cp(data):
+    """
+
+    Returns:
+
+    """
+
+    cp_ex = re.compile(CP_PATTERN)
+    return bool(cp_ex.fullmatch(data))
+
+
+def valida_nomb_ap(data):
+    """
+
+    Returns:
+
+    """
+
+    nombre_ex = re.compile(NOMBRE_PATTERN)
+    return bool(nombre_ex.fullmatch(data))
+
+
+# Dictionaries for simple checks
+simple_checks = {
+    "TRAMITE": "0",
+    "NSS": None,
+    "DIGITO_VERIFICADOR": None,
+    "NOMBRE_PADRE": None,
+    "APELLIDO_PATERNO_PADRE": None,
+    "APELLIDO_MATERNO_PADRE": None,
+    "NOMBRE_MADRE": None,
+    "APELLIDO_PATERNO_MADRE": None,
+    "APELLIDO_MATERNO_MADRE": None,
+    "SALARIO_BASE": "0000.00",
+    "JORNADA_SEMANA": "0",
+    "TIPO_SALARIO": "1",
+    "OCUPACION": "ESTUDIANTE",
+    "TIPO_TRABAJO": "2",
+    "TRAMITADO": "0",
+}
+
+# Dictionaries for validations
+validation_checks = {
+    "NOMBRE": valida_nomb_ap,
+    "APELLIDO_PATERNO": valida_nomb_ap,
+    "APELLIDO_MATERNO": valida_nomb_ap,
+    "SEXO": valida_sexo,
+    "LUGAR_NACIMIENTO": valida_lug_nac,
+    "DIA_NACIMIENTO": valida_dia,
+    "MES_NACIMIENTO": valida_mes,
+    "ANIO_NACIMIENTO": valida_anio,
+    "DESCRIPCION_OCUPACION": valida_desc_ocupa,
+    "DIA_INGRESO": valida_dia,
+    "MES_INGRESO": valida_mes,
+    "ANIO_INGRESO": valida_anio,
+    "CODIGO_POSTAL": valida_cp,
+}
+
 RENAPO_GENDER_DICT = {"H": "1", "M": "2"}
 
 RENAPO_STATE_DICT = {
@@ -306,103 +442,28 @@ def validate_vs_xsd(input_xml, xsd_filename, xsd_check, output_filename):
         print("Validation error:", ve)
 
 
-def valida_curp(data):
-    """
-
-    Returns:
-
-    """
-
-    curp_ex = re.compile(CURP_PATTERN)
-    return bool(curp_ex.fullmatch(data))
+def append_incidencia(element, xml_tag, xml_value, expected_value, output_filename):
+    msg = (
+        f"{element}|Value on xml tag <{xml_tag}>: {xml_value}, must be {expected_value}"
+    )
+    # lista_incidencias.append(msg)
+    save_on_report(output_filename, msg)
 
 
-def valida_sexo(data):
-    """
-
-    Returns:
-
-    """
-
-    sexo_ex = re.compile(SEXO_PATTERN)
-    return bool(sexo_ex.fullmatch(data))
-
-
-def valida_lug_nac(data):
-    """
-
-    Returns:
-
-    """
-
-    lug_nac_ex = re.compile(LUG_NAC_PATTERN)
-    return bool(lug_nac_ex.fullmatch(data))
-
-
-def valida_dia(data):
-    """
-
-    Returns:
-
-    """
-
-    dia_ex = re.compile(DIA_PATTERN)
-    return bool(dia_ex.fullmatch(data))
-
-
-def valida_mes(data):
-    """
-
-    Returns:
-
-    """
-
-    mes_ex = re.compile(MES_PATTERN)
-    return bool(mes_ex.fullmatch(data))
-
-
-def valida_anio(data):
-    """
-
-    Returns:
-
-    """
-
-    anio_ex = re.compile(ANIO_PATTERN)
-    return bool(anio_ex.fullmatch(data))
-
-
-def valida_desc_ocupa(data):
-    """
-
-    Returns:
-
-    """
-
-    des_ocupa_ex = re.compile(DESC_OCUP_PATTERN)
-    return bool(des_ocupa_ex.fullmatch(data))
-
-
-def valida_cp(data):
-    """
-
-    Returns:
-
-    """
-
-    cp_ex = re.compile(CP_PATTERN)
-    return bool(cp_ex.fullmatch(data))
-
-
-def valida_nomb_ap(data):
-    """
-
-    Returns:
-
-    """
-
-    nombre_ex = re.compile(NOMBRE_PATTERN)
-    return bool(nombre_ex.fullmatch(data))
+def append_validation_failure(
+    element,
+    xml_tag,
+    xml_value,
+    validation_function,
+    function_name,
+    output_filename,
+):
+    if not validation_function(xml_value):
+        msg = f"{element}|Value on xml tag <{xml_tag}>: {xml_value}, it's not valid"
+        if function_name:
+            msg += f" ({function_name})"
+        # lista_incidencias.append(msg)
+        save_on_report(output_filename, msg)
 
 
 def validate_custom_rules(root_data, output_filename):
@@ -444,32 +505,75 @@ def validate_custom_rules(root_data, output_filename):
                 # Extract CURP value
                 tramite_xml = registro.find("TRAMITE").text
                 nss_xml = registro.find("NSS").text
-                dv_xml = registro.find("DIGITO_VERIFICADOR").text
+                digito_verificador_xml = registro.find("DIGITO_VERIFICADOR").text
                 nombre_xml = registro.find("NOMBRE").text
-                ap_paterno_xml = registro.find("APELLIDO_PATERNO").text
-                ap_materno_xml = registro.find("APELLIDO_MATERNO").text
+                apellido_paterno_xml = registro.find("APELLIDO_PATERNO").text
+                apellido_materno_xml = registro.find("APELLIDO_MATERNO").text
                 sexo_xml = registro.find("SEXO").text
-                lugar_nac_xml = registro.find("LUGAR_NACIMIENTO").text
-                dia_nac_xml = registro.find("DIA_NACIMIENTO").text
-                mes_nac_xml = registro.find("MES_NACIMIENTO").text
-                anio_nac_xml = registro.find("ANIO_NACIMIENTO").text
-                nomb_padre_xml = registro.find("NOMBRE_PADRE").text
-                ap_pat_padre_xml = registro.find("APELLIDO_PATERNO_PADRE").text
-                ap_mat_padre_xml = registro.find("APELLIDO_MATERNO_PADRE").text
-                nomb_madre_xml = registro.find("NOMBRE_MADRE").text
-                ap_pat_madre_xml = registro.find("APELLIDO_PATERNO_MADRE").text
-                ap_mat_madre_xml = registro.find("APELLIDO_MATERNO_MADRE").text
-                dia_ing_xml = registro.find("DIA_INGRESO").text
-                mes_ing_xml = registro.find("MES_INGRESO").text
-                anio_ing_xml = registro.find("ANIO_INGRESO").text
-                sal_base_xml = registro.find("SALARIO_BASE").text
-                jor_sem_xml = registro.find("JORNADA_SEMANA").text
-                t_salario_xml = registro.find("TIPO_SALARIO").text
+                lugar_nacimiento_xml = registro.find("LUGAR_NACIMIENTO").text
+                dia_nacimiento_xml = registro.find("DIA_NACIMIENTO").text
+                mes_nacimiento_xml = registro.find("MES_NACIMIENTO").text
+                anio_nacimiento_xml = registro.find("ANIO_NACIMIENTO").text
+                nombre_padre_xml = registro.find("NOMBRE_PADRE").text
+                apellido_paterno_padre_xml = registro.find(
+                    "APELLIDO_PATERNO_PADRE"
+                ).text
+                apellido_materno_padre_xml = registro.find(
+                    "APELLIDO_MATERNO_PADRE"
+                ).text
+                nombre_madre_xml = registro.find("NOMBRE_MADRE").text
+                apellido_paterno_madre_xml = registro.find(
+                    "APELLIDO_PATERNO_MADRE"
+                ).text
+                apellido_materno_madre_xml = registro.find(
+                    "APELLIDO_MATERNO_MADRE"
+                ).text
+                dia_ingreso_xml = registro.find("DIA_INGRESO").text
+                mes_ingreso_xml = registro.find("MES_INGRESO").text
+                anio_ingreso_xml = registro.find("ANIO_INGRESO").text
+                salario_base_xml = registro.find("SALARIO_BASE").text
+                jornada_semana_xml = registro.find("JORNADA_SEMANA").text
+                tipo_salario_xml = registro.find("TIPO_SALARIO").text
                 ocupacion_xml = registro.find("OCUPACION").text
-                desc_ocupa_xml = registro.find("DESCRIPCION_OCUPACION").text
-                t_trabajo_xml = registro.find("TIPO_TRABAJO").text
-                cp_xml = registro.find("CODIGO_POSTAL").text
+                descripcion_ocupacion_xml = registro.find("DESCRIPCION_OCUPACION").text
+                tipo_trabajo_xml = registro.find("TIPO_TRABAJO").text
+                codigo_postal_xml = registro.find("CODIGO_POSTAL").text
                 tramitado_xml = registro.find("TRAMITADO").text
+
+                # Implement simple checks
+                for tag, expected_value in simple_checks.items():
+                    value = locals()[f"{tag.lower()}_xml"]
+                    if value != expected_value:
+                        append_incidencia(
+                            curp_element,
+                            tag,
+                            value,
+                            expected_value,
+                            output_filename,
+                        )
+
+                # Implement validation checks
+                for tag, function in validation_checks.items():
+                    value = locals()[f"{tag.lower()}_xml"]
+                    if value is not None:
+                        append_validation_failure(
+                            curp_element,
+                            tag,
+                            value,
+                            function,
+                            function.__name__,
+                            output_filename,
+                        )
+
+                # Additional specific checks
+                """ if apellido_paterno_xml is None:
+                    append_incidencia(
+                        curp_element,
+                        "APELLIDO_PATERNO",
+                        None,
+                        "it's not valid",
+                        output_filename,
+                    )
 
                 if tramite_xml != "0":
                     incidencia = (
@@ -489,11 +593,11 @@ def validate_custom_rules(root_data, output_filename):
                     )
                     lista_incidencias.append(incidencia)
 
-                if dv_xml is not None:
+                if digito_verificador_xml is not None:
                     incidencia = (
                         curp_element
                         + "|Value on xml tag <DIGITO_VERIFICADOR>: "
-                        + str(dv_xml)
+                        + str(digito_verificador_xml)
                         + ", must be NULL"
                     )
                     lista_incidencias.append(incidencia)
@@ -509,12 +613,12 @@ def validate_custom_rules(root_data, output_filename):
                         )
                         lista_incidencias.append(incidencia)
 
-                if ap_paterno_xml is not None:
-                    if not valida_nomb_ap(ap_paterno_xml):
+                if apellido_paterno_xml is not None:
+                    if not valida_nomb_ap(apellido_paterno_xml):
                         incidencia = (
                             curp_element
                             + "|Value on xml tag <APELLIDO_PATERNO>: "
-                            + str(ap_paterno_xml)
+                            + str(apellido_paterno_xml)
                             + ", it's not valid"
                         )
                         lista_incidencias.append(incidencia)
@@ -522,17 +626,17 @@ def validate_custom_rules(root_data, output_filename):
                     incidencia = (
                         curp_element
                         + "|Value on xml tag <APELLIDO_PATERNO>: "
-                        + str(ap_paterno_xml)
+                        + str(apellido_paterno_xml)
                         + ", it's not valid"
                     )
                     lista_incidencias.append(incidencia)
 
-                if ap_materno_xml is not None:
-                    if not valida_nomb_ap(ap_materno_xml):
+                if apellido_materno_xml is not None:
+                    if not valida_nomb_ap(apellido_materno_xml):
                         incidencia = (
                             curp_element
                             + "|Value on xml tag <APELLIDO_MATERNO>: "
-                            + str(ap_materno_xml)
+                            + str(apellido_materno_xml)
                             + ", it's not valid"
                         )
                         lista_incidencias.append(incidencia)
@@ -547,155 +651,155 @@ def validate_custom_rules(root_data, output_filename):
                         )
                         lista_incidencias.append(incidencia)
 
-                if lugar_nac_xml is not None:
-                    if not valida_lug_nac(lugar_nac_xml):
+                if lugar_nacimiento_xml is not None:
+                    if not valida_lug_nac(lugar_nacimiento_xml):
                         incidencia = (
                             curp_element
                             + "|Value on xml tag <LUGAR_NACIMIENTO>: "
-                            + str(lugar_nac_xml)
+                            + str(lugar_nacimiento_xml)
                             + ", must be 01-32, 35"
                         )
                         lista_incidencias.append(incidencia)
 
-                if dia_nac_xml is not None:
-                    if not valida_dia(dia_nac_xml):
+                if dia_nacimiento_xml is not None:
+                    if not valida_dia(dia_nacimiento_xml):
                         incidencia = (
                             curp_element
                             + "|Value on xml tag <DIA_NACIMIENTO>: "
-                            + str(dia_nac_xml)
+                            + str(dia_nacimiento_xml)
                             + ", it's not valid"
                         )
                         lista_incidencias.append(incidencia)
 
-                if mes_nac_xml is not None:
-                    if not valida_mes(mes_nac_xml):
+                if mes_nacimiento_xml is not None:
+                    if not valida_mes(mes_nacimiento_xml):
                         incidencia = (
                             curp_element
                             + "|Value on xml tag <MES_NACIMIENTO>: "
-                            + str(mes_nac_xml)
+                            + str(mes_nacimiento_xml)
                             + ", it's not valid"
                         )
                         lista_incidencias.append(incidencia)
 
-                if anio_nac_xml is not None:
-                    if not valida_anio(anio_nac_xml):
+                if anio_nacimiento_xml is not None:
+                    if not valida_anio(anio_nacimiento_xml):
                         incidencia = (
                             curp_element
                             + "|Value on xml tag <ANIO_NACIMIENTO>: "
-                            + str(anio_nac_xml)
+                            + str(anio_nacimiento_xml)
                             + ", it's not valid"
                         )
                         lista_incidencias.append(incidencia)
 
                 # Padres Data
-                if nomb_padre_xml is not None:
+                if nombre_padre_xml is not None:
                     incidencia = (
                         curp_element
                         + "|Value on xml tag <NOMBRE_PADRE>: "
-                        + str(nomb_padre_xml)
+                        + str(nombre_padre_xml)
                         + ", must be NULL"
                     )
                     lista_incidencias.append(incidencia)
 
-                if ap_pat_padre_xml is not None:
+                if apellido_paterno_padre_xml is not None:
                     incidencia = (
                         curp_element
                         + "|Value on xml tag <APELLIDO_PATERNO_PADRE>: "
-                        + str(ap_pat_padre_xml)
+                        + str(apellido_paterno_padre_xml)
                         + ", must be NULL"
                     )
                     lista_incidencias.append(incidencia)
 
-                if ap_mat_padre_xml is not None:
+                if apellido_materno_padre_xml is not None:
                     incidencia = (
                         curp_element
                         + "|Value on xml tag <APELLIDO_MATERNO_PADRE>: "
-                        + str(ap_mat_padre_xml)
+                        + str(apellido_materno_padre_xml)
                         + ", must be NULL"
                     )
                     lista_incidencias.append(incidencia)
 
-                if nomb_madre_xml is not None:
+                if nombre_madre_xml is not None:
                     incidencia = (
                         curp_element
                         + "|Value on xml tag <NOMBRE_MADRE>: "
-                        + str(nomb_madre_xml)
+                        + str(nombre_madre_xml)
                         + ", must be NULL"
                     )
                     lista_incidencias.append(incidencia)
 
-                if ap_pat_madre_xml is not None:
+                if apellido_paterno_madre_xml is not None:
                     incidencia = (
                         curp_element
                         + "|Value on xml tag <APELLIDO_PATERNO_MADRE>: "
-                        + str(ap_pat_madre_xml)
+                        + str(apellido_paterno_madre_xml)
                         + ", must be NULL"
                     )
                     lista_incidencias.append(incidencia)
 
-                if ap_mat_madre_xml is not None:
+                if apellido_materno_madre_xml is not None:
                     incidencia = (
                         curp_element
                         + "|Value on xml tag <APELLIDO_MATERNO_MADRE>: "
-                        + str(ap_mat_madre_xml)
+                        + str(apellido_materno_madre_xml)
                         + ", must be NULL"
                     )
                     lista_incidencias.append(incidencia)
 
                 # Datos de ingreso
-                if dia_ing_xml is not None:
-                    if not valida_dia(dia_ing_xml):
+                if dia_ingreso_xml is not None:
+                    if not valida_dia(dia_ingreso_xml):
                         incidencia = (
                             curp_element
                             + "|Value on xml tag <DIA_INGRESO>: "
-                            + str(dia_ing_xml)
+                            + str(dia_ingreso_xml)
                             + ", it's not valid"
                         )
                         lista_incidencias.append(incidencia)
 
-                if mes_ing_xml is not None:
-                    if not valida_mes(mes_ing_xml):
+                if mes_ingreso_xml is not None:
+                    if not valida_mes(mes_ingreso_xml):
                         incidencia = (
                             curp_element
                             + "|Value on xml tag <MES_INGRESO>: "
-                            + str(mes_ing_xml)
+                            + str(mes_ingreso_xml)
                             + ", it's not valid"
                         )
                         lista_incidencias.append(incidencia)
 
-                if anio_ing_xml is not None:
-                    if not valida_anio(anio_ing_xml):
+                if anio_ingreso_xml is not None:
+                    if not valida_anio(anio_ingreso_xml):
                         incidencia = (
                             curp_element
                             + "|Value on xml tag <ANIO_INGRESO>: "
-                            + str(anio_ing_xml)
+                            + str(anio_ingreso_xml)
                             + ", it's not valid"
                         )
                         lista_incidencias.append(incidencia)
 
-                if sal_base_xml != "0000.00":
+                if salario_base_xml != "0000.00":
                     incidencia = (
                         curp_element
                         + "|Value on xml tag <SALARIO_BASE>: "
-                        + str(sal_base_xml)
+                        + str(salario_base_xml)
                         + ", must be 0000.00"
                     )
                     lista_incidencias.append(incidencia)
 
-                if jor_sem_xml != "0":
+                if jornada_semana_xml != "0":
                     incidencia = (
                         curp_element
                         + "|Value on xml tag <JORNADA_SEMANA>: "
-                        + str(jor_sem_xml)
+                        + str(jornada_semana_xml)
                         + ", must be 0"
                     )
                     lista_incidencias.append(incidencia)
 
-                if t_salario_xml != "1":
+                if tipo_salario_xml != "1":
                     incidencia = (
                         curp_element
                         + "|Value on xml tag <TIPO_SALARIO>: "
-                        + str(t_salario_xml)
+                        + str(tipo_salario_xml)
                         + ", must be 0"
                     )
                     lista_incidencias.append(incidencia)
@@ -709,12 +813,12 @@ def validate_custom_rules(root_data, output_filename):
                     )
                     lista_incidencias.append(incidencia)
 
-                if desc_ocupa_xml is not None:
-                    if not valida_desc_ocupa(desc_ocupa_xml):
+                if descripcion_ocupacion_xml is not None:
+                    if not valida_desc_ocupa(descripcion_ocupacion_xml):
                         incidencia = (
                             curp_element
                             + "|Value on xml tag <DESCRIPCION_OCUPACION>: "
-                            + str(desc_ocupa_xml)
+                            + str(descripcion_ocupacion_xml)
                             + ", must be "
                             + "MEDIO SUPERIOR|"
                             + "SUPERIOR|"
@@ -723,21 +827,21 @@ def validate_custom_rules(root_data, output_filename):
                         )
                         lista_incidencias.append(incidencia)
 
-                if t_trabajo_xml != "2":
+                if tipo_trabajo_xml != "2":
                     incidencia = (
                         curp_element
                         + "|Value on xml tag <TIPO_TRABAJO>: "
-                        + str(t_trabajo_xml)
+                        + str(tipo_trabajo_xml)
                         + ", must be 2"
                     )
                     lista_incidencias.append(incidencia)
 
-                if cp_xml is not None:
-                    if not valida_cp(cp_xml):
+                if codigo_postal_xml is not None:
+                    if not valida_cp(codigo_postal_xml):
                         incidencia = (
                             curp_element
                             + "|Value on xml tag <CODIGO_POSTAL>: "
-                            + str(cp_xml)
+                            + str(codigo_postal_xml)
                             + ", it's not valid"
                         )
                         lista_incidencias.append(incidencia)
@@ -754,11 +858,11 @@ def validate_custom_rules(root_data, output_filename):
                 # Validate CURP
                 if valida_curp(curp_element):
                     lugar_nac_curp = str(curp_value[11:13])
-                    if renapo_state_dic[lugar_nac_curp] != lugar_nac_xml:
+                    if renapo_state_dic[lugar_nac_curp] != lugar_nacimiento_xml:
                         incidencia = (
                             curp_element
                             + "|Value on xml tag <LUGAR_NACIMIENTO>: "
-                            + str(lugar_nac_xml)
+                            + str(lugar_nacimiento_xml)
                             + ", doesn't match value on xml tag <CURP>: "
                             + lugar_nac_curp
                         )
@@ -776,28 +880,31 @@ def validate_custom_rules(root_data, output_filename):
                         lista_incidencias.append(incidencia)
 
                     dia_nac_curp = curp_value[8:10]
-                    if dia_nac_curp != dia_nac_xml:
+                    if dia_nac_curp != dia_nacimiento_xml:
                         incidencia = (
                             curp_element
                             + "|Value on xml tag <DIA_NACIMIENTO>: "
-                            + str(dia_nac_xml)
+                            + str(dia_nacimiento_xml)
                             + ", doesn't match value on xml tag <CURP>: "
                             + dia_nac_curp
                         )
                         lista_incidencias.append(incidencia)
 
                     mes_nac_curp = curp_value[6:8]
-                    if mes_nac_curp != mes_nac_xml:
+                    if mes_nac_curp != mes_nacimiento_xml:
                         incidencia = (
                             curp_element
                             + "|Value on xml tag <MES_NACIMIENTO>: "
-                            + str(mes_nac_xml)
+                            + str(mes_nacimiento_xml)
                             + ", doesn't match value on xml tag <CURP>: "
                             + mes_nac_curp
                         )
                         lista_incidencias.append(incidencia)
 
-                    if anio_nac_xml is not None and anio_nac_xml.isdigit():
+                    if (
+                        anio_nacimiento_xml is not None
+                        and anio_nacimiento_xml.isdigit()
+                    ):
                         anio_nac_curp = curp_value[4:6]
                         dif_homonimia = curp_value[16:17]
 
@@ -806,11 +913,11 @@ def validate_custom_rules(root_data, output_filename):
                         else:
                             anio_nac_curp = 2000 + int(anio_nac_curp)
 
-                        if anio_nac_curp != int(anio_nac_xml):
+                        if anio_nac_curp != int(anio_nacimiento_xml):
                             incidencia = (
                                 curp_element
                                 + "|Value on xml tag <ANIO_NACIMIENTO>: "
-                                + str(anio_nac_xml)
+                                + str(anio_nacimiento_xml)
                                 + ", doesn't match calculated value"
                                 + " on xml tag <CURP>: "
                                 + str(anio_nac_curp)
@@ -823,7 +930,7 @@ def validate_custom_rules(root_data, output_filename):
                         + str(curp_element)
                         + ", isn't a valid CURP pattern"
                     )
-                    lista_incidencias.append(incidencia)
+                    lista_incidencias.append(incidencia) """
 
                 for incidencia in lista_incidencias:
                     num_incidencias += 1
@@ -870,28 +977,28 @@ def create_queue(root_xml):
         data_list = []
         curp_value = curp.find("CURP").text
         nombre_xml = curp.find("NOMBRE").text
-        ap_paterno_xml = curp.find("APELLIDO_PATERNO").text
-        ap_materno_xml = curp.find("APELLIDO_MATERNO").text
+        apellido_paterno_xml = curp.find("APELLIDO_PATERNO").text
+        apellido_materno_xml = curp.find("APELLIDO_MATERNO").text
         sexo_xml = curp.find("SEXO").text
-        lugar_nac_xml = curp.find("LUGAR_NACIMIENTO").text
-        dia_nac_xml = curp.find("DIA_NACIMIENTO").text
-        mes_nac_xml = curp.find("MES_NACIMIENTO").text
-        anio_nac_xml = curp.find("ANIO_NACIMIENTO").text
+        lugar_nacimiento_xml = curp.find("LUGAR_NACIMIENTO").text
+        dia_nacimiento_xml = curp.find("DIA_NACIMIENTO").text
+        mes_nacimiento_xml = curp.find("MES_NACIMIENTO").text
+        anio_nacimiento_xml = curp.find("ANIO_NACIMIENTO").text
 
         nombre_xml = nombre_xml.replace("#", "Ñ")
-        ap_paterno_xml = ap_paterno_xml.replace("#", "Ñ")
-        if ap_materno_xml:
-            ap_materno_xml = ap_materno_xml.replace("#", "Ñ")
+        apellido_paterno_xml = apellido_paterno_xml.replace("#", "Ñ")
+        if apellido_materno_xml:
+            apellido_materno_xml = apellido_materno_xml.replace("#", "Ñ")
 
         data_list.append(curp_value)
         data_list.append(nombre_xml)
-        data_list.append(ap_paterno_xml)
-        data_list.append(ap_materno_xml)
+        data_list.append(apellido_paterno_xml)
+        data_list.append(apellido_materno_xml)
         data_list.append(sexo_xml)
-        data_list.append(lugar_nac_xml)
-        data_list.append(dia_nac_xml)
-        data_list.append(mes_nac_xml)
-        data_list.append(anio_nac_xml)
+        data_list.append(lugar_nacimiento_xml)
+        data_list.append(dia_nacimiento_xml)
+        data_list.append(mes_nacimiento_xml)
+        data_list.append(anio_nacimiento_xml)
 
         data_queue.put(data_list)
     progreso.close()
@@ -1019,10 +1126,10 @@ def consulta_ws(data_list, pbar, output_filename, ws_url_renapo, wsdl_file):
             ap_paterno_xml = record_data[2]
             ap_materno_xml = record_data[3]
             sexo_xml = record_data[4]
-            lugar_nac_xml = record_data[5]
-            dia_nac_xml = record_data[6]
-            mes_nac_xml = record_data[7]
-            anio_nac_xml = record_data[8]
+            lugar_nacimiento_xml = record_data[5]
+            dia_nacimiento_xml = record_data[6]
+            mes_nacimiento_xml = record_data[7]
+            anio_nacimiento_xml = record_data[8]
 
             style.change_color(style.GREEN)
 
@@ -1084,14 +1191,14 @@ def consulta_ws(data_list, pbar, output_filename, ws_url_renapo, wsdl_file):
                     record_data.append(incidencia)
                     save_on_report(output_filename, incidencia)
 
-                lugar_nac_curp = curp_value[11:13]
-                if RENAPO_STATE_DICT[lugar_nac_curp] != lugar_nac_xml:
+                lugar_nacimiento_curp = curp_value[11:13]
+                if RENAPO_STATE_DICT[lugar_nacimiento_curp] != lugar_nacimiento_xml:
                     incidencia = (
                         curp_value
                         + "|Lugar de nacimiento: "
-                        + lugar_nac_xml
+                        + lugar_nacimiento_xml
                         + ", doesn't match RENAPO response: "
-                        + lugar_nac_curp
+                        + lugar_nacimiento_curp
                     )
                     record_data.append(incidencia)
                     save_on_report(output_filename, incidencia)
@@ -1108,24 +1215,24 @@ def consulta_ws(data_list, pbar, output_filename, ws_url_renapo, wsdl_file):
                     record_data.append(incidencia)
                     save_on_report(output_filename, incidencia)
 
-                dia_nac_curp = curp_value[8:10]
-                if dia_nac_curp != dia_nac_xml:
+                dia_nacimiento_curp = curp_value[8:10]
+                if dia_nacimiento_curp != dia_nacimiento_xml:
                     incidencia = (
                         curp_value
                         + "|Día Nacimiento: "
-                        + dia_nac_xml
+                        + dia_nacimiento_xml
                         + ", doesn't match RENAPO response: "
-                        + dia_nac_curp
+                        + dia_nacimiento_curp
                     )
                     record_data.append(incidencia)
                     save_on_report(output_filename, incidencia)
 
                 mes_nac_curp = curp_value[6:8]
-                if mes_nac_curp != mes_nac_xml:
+                if mes_nac_curp != mes_nacimiento_xml:
                     incidencia = (
                         curp_value
                         + "|Mes Nacimiento: "
-                        + mes_nac_xml
+                        + mes_nacimiento_xml
                         + ", doesn't match RENAPO response: "
                         + mes_nac_curp
                     )
@@ -1140,11 +1247,11 @@ def consulta_ws(data_list, pbar, output_filename, ws_url_renapo, wsdl_file):
                 else:
                     anio_nac_curp = 2000 + int(anio_nac_curp)
 
-                if anio_nac_curp != int(anio_nac_xml):
+                if anio_nac_curp != int(anio_nacimiento_xml):
                     incidencia = (
                         curp_value
                         + "|Año Nacimiento XML: "
-                        + str(anio_nac_xml)
+                        + str(anio_nacimiento_xml)
                         + ", doesn't match RENAPO response: "
                         + str(anio_nac_curp)
                     )

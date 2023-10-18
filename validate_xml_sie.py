@@ -637,7 +637,8 @@ def create_queue(root_xml):
         anio_nacimiento_xml = curp.find("ANIO_NACIMIENTO").text
 
         nombre_xml = nombre_xml.replace("#", "Ñ")
-        apellido_paterno_xml = apellido_paterno_xml.replace("#", "Ñ")
+        if apellido_paterno_xml:
+            apellido_paterno_xml = apellido_paterno_xml.replace("#", "Ñ")
         if apellido_materno_xml:
             apellido_materno_xml = apellido_materno_xml.replace("#", "Ñ")
 
@@ -835,8 +836,9 @@ def consulta_ws(data_list, pbar, output_filename, ws_url_renapo, wsdl_file):
                     else:
                         incidencia = (
                             curp_value
-                            + "|APELLIDO_MATERNO in XML: NULL, "
-                            + "doesn't match RENAPO response: "
+                            + "|APELLIDO_MATERNO in XML: "
+                            + ap_materno_xml
+                            + ", doesn't match RENAPO response: "
                             + response_ws.Apellido2
                         )
                     record_data.append(incidencia)

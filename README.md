@@ -1,4 +1,4 @@
-# XML-SIE files Validator (validate_xml_sie)
+# XML-SIE File Validator (validate_xml_sie)
 <a href="https://github.com/FernandoTorresL/validate_xml_sie/commits/main" target="_blank">![GitHub last commit](https://img.shields.io/github/last-commit/FernandoTorresL/validate_xml_sie)</a>
 
 <a href="https://github.com/FernandoTorresL/validate_xml_sie" target="_blank">![GitHub repo size](https://img.shields.io/github/repo-size/FernandoTorresL/validate_xml_sie)</a>
@@ -16,19 +16,43 @@ With this project, users can validate and verify that the XML files are well for
 
 Before this project was implemented, this office only use a checklist and a specific Manual to build an XML file using the rules and values described there. This result on bad XML files or incorrect data that develop on several errors that SIE system raises. Now, using this project, we can save a lot of time and effort looking for wrong data, tag missing and so on.
 
-### Technology used
+## Technology used
 
 This project was build with the use of: 
 
 - Python v3.11.4
+- Python v3.10.12 (W10)
 
 ## Installation
 
-Create a Python virtual environment
+### Clone repo
+
+```sh
+git clone git@github.com:FernandoTorresL/validate_xml_sie.git
+```
+> Optional: You can change *<my_folder>* on this instruction to create a new folder
+
+```sh
+git clone git@github.com:FernandoTorresL/validate_xml_sie.git <my_folder> 
+```
+
+
+### Create/Copy initial files (only placeholder_file.txt on GitHub)
+
+You must create o paste some files on place:
+
+- A wsdl file on archivo_wsdl folder
+- A xsd file on archivo_xsd folder
+- A secrets.ini file based on secrets.example.ini (Update values on file)
+- A xml file on main folder
+
+
+### Change to working directory and create a Python virtual environment
 
 OS X & Linux:
 
 ```sh
+$ cd validate_xml_sie
 $ python -m venv ./venv
 $ source ./venv/bin/activate
 $ pip install --upgrade pip
@@ -38,6 +62,7 @@ $ pip3 install -r requirements.txt
 
 Windows:
 ```sh
+$ cd validate_xml_sie
 $ python -m venv venv
 $ .\venv\Scripts\activate
 $ pip3 install -r requirements.txt
@@ -46,6 +71,7 @@ $ pip3 install -r requirements.txt
 
 Windows 10 with Git bash terminal:
 ```sh
+$ cd validate_xml_sie
 $ python -m venv venv
 $ source ./venv/Scripts/activate
 $ pip3 install -r requirements.txt
@@ -54,10 +80,21 @@ $ pip3 install -r requirements.txt
 
 Windows 10 with powershell terminal:
 ```sh
+PS> cd validate_xml_sie
 PS> python -m venv venv
 PS> .\.venv\Scripts\Activate.ps1
 PS> pip3 install -r requirements.txt
 (.venv) PS>
+```
+
+Windows 10 with WSL shell:
+```sh
+user@pc_name: cd validate_xml_sie
+user@pc_name: python3 -m venv venv
+user@pc_name: source venv/bin/activate
+user@pc_name: pip install --upgrade pip
+user@pc_name: pip3 install -r requirements.txt
+(venv) user@pc_name:
 ```
 
 > This prompt may vary if you use another shell configuration, like pk10 or git bash
@@ -70,7 +107,7 @@ OS X & Linux & Windows:
 $
 ```
 
-## View help and arguments
+### View help and arguments
 
 ```sh
 python3 validate_xml_sie.py --help
@@ -89,7 +126,7 @@ options:
   -x, --xsd_check     check xml file vs xsd definition file
   -r, --renapo_check  check xml data vs WS RENAPO
   -u, --use_threads   use threads
-``````
+```
 > If using another Python version try: python validate_xml_sie.py --help
 
 ## Run the project
@@ -110,13 +147,13 @@ Then, you can execute the program:
 python validate_xml_sie.py <xml_filename.xml> -x -r -u
 ```
 
-## Example
+### Example
 
 ```sh
 python validate_xml_sie.py Example.xml --xsd_check --renapo_check --use_threads
 ```
 
-### Example output:
+### Example output
 
 ```sh
 Parameters:(['Example.xml'], True, True, True)
@@ -150,7 +187,7 @@ Recuperando: 100%|████████████████████�
 Consultando: 100%|████████████████████████████████████████████████████████████████████████████| 5697/5697 [07:15<00:00, 13.07queries/s]
 ```
 
-### Output files
+## Output files
 
 * ./output_files/<time_stamp>_dataframe.csv, CSV file with the data extracted from xml file
 * ./output_files/<time_stamp>_report.csv, CSV file with errors description and details
@@ -173,7 +210,7 @@ Consultando: 100%|████████████████████�
 
 
 
-#### Follow me 
+## Follow me 
 [fertorresmx.dev](https://fertorresmx.dev/)
 
 #### :globe_with_meridians: [Twitter](https://twitter.com/FerTorresMx), [Instagram](https://www.instagram.com/fertorresmx/): @fertorresmx

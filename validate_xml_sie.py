@@ -13,6 +13,7 @@ import re
 import urllib
 from concurrent.futures import ThreadPoolExecutor
 from configparser import ConfigParser
+from io import StringIO
 
 import lxml.etree as ET
 import pandas as pd
@@ -418,6 +419,7 @@ def validate_vs_xsd(input_xml, xsd_filename, xsd_check, output_filename):
 
         xml_file_path = os.path.join("./", input_xml)
         xsd_file_path = os.path.join("./archivo_xsd/", xsd_filename)
+        xsd_file_path = StringIO(xsd_file_path)
 
         xmlschema = ET.XMLSchema(ET.parse(xsd_file_path))
         tree = ET.parse(xml_file_path)

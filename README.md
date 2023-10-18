@@ -29,6 +29,7 @@ Create a Python virtual environment
 OS X & Linux:
 
 ```sh
+$ cd validate_xml_sie
 $ python -m venv ./venv
 $ source ./venv/bin/activate
 $ pip install --upgrade pip
@@ -38,6 +39,7 @@ $ pip3 install -r requirements.txt
 
 Windows:
 ```sh
+$ cd validate_xml_sie
 $ python -m venv venv
 $ .\venv\Scripts\activate
 $ pip3 install -r requirements.txt
@@ -46,6 +48,7 @@ $ pip3 install -r requirements.txt
 
 Windows 10 with Git bash terminal:
 ```sh
+$ cd validate_xml_sie
 $ python -m venv venv
 $ source ./venv/Scripts/activate
 $ pip3 install -r requirements.txt
@@ -54,10 +57,21 @@ $ pip3 install -r requirements.txt
 
 Windows 10 with powershell terminal:
 ```sh
+PS> cd validate_xml_sie
 PS> python -m venv venv
 PS> .\.venv\Scripts\Activate.ps1
 PS> pip3 install -r requirements.txt
 (.venv) PS>
+```
+
+Windows 10 with WSL shell:
+```sh
+user@pc_name: cd validate_xml_sie
+user@pc_name: python3 -m venv venv
+user@pc_name: source venv/bin/activate
+user@pc_name: pip install --upgrade pip
+user@pc_name: pip3 install -r requirements.txt
+(venv) user@pc_name:
 ```
 
 > This prompt may vary if you use another shell configuration, like pk10 or git bash

@@ -13,6 +13,7 @@ import re
 import urllib
 from concurrent.futures import ThreadPoolExecutor
 from configparser import ConfigParser
+from io import StringIO
 
 import lxml.etree as ET
 import pandas as pd
@@ -418,6 +419,7 @@ def validate_vs_xsd(input_xml, xsd_filename, xsd_check, output_filename):
 
         xml_file_path = os.path.join("./", input_xml)
         xsd_file_path = os.path.join("./archivo_xsd/", xsd_filename)
+        xsd_file_path = StringIO(xsd_file_path)
 
         xmlschema = ET.XMLSchema(ET.parse(xsd_file_path))
         tree = ET.parse(xml_file_path)
@@ -637,7 +639,8 @@ def create_queue(root_xml):
         anio_nacimiento_xml = curp.find("ANIO_NACIMIENTO").text
 
         nombre_xml = nombre_xml.replace("#", "Ñ")
-        apellido_paterno_xml = apellido_paterno_xml.replace("#", "Ñ")
+        if apellido_paterno_xml:
+            apellido_paterno_xml = apellido_paterno_xml.replace("#", "Ñ")
         if apellido_materno_xml:
             apellido_materno_xml = apellido_materno_xml.replace("#", "Ñ")
 
@@ -835,8 +838,9 @@ def consulta_ws(data_list, pbar, output_filename, ws_url_renapo, wsdl_file):
                     else:
                         incidencia = (
                             curp_value
-                            + "|APELLIDO_MATERNO in XML: NULL, "
-                            + "doesn't match RENAPO response: "
+                            + "|APELLIDO_MATERNO in XML: "
+                            + ap_materno_xml
+                            + ", doesn't match RENAPO response: "
                             + response_ws.Apellido2
                         )
                     record_data.append(incidencia)
